@@ -3,11 +3,10 @@
 ;; `bb dev/session-status.bb`, `gmake status`, and the SessionStart hook in
 ;; .claude/settings.json, whose stdout becomes context for the agent.
 ;;
-;; It reports and never starts, stops or kills anything. The rules it checks
-;; come from the isolation table in aygp-dr/github-skills-search-clojure's
-;; plugin plan: a .nrepl-port file is a claim, not a fact, so ask the port;
-;; a REPL that answers may still belong to another checkout, so ask it where
-;; it is running.
+;; It reports and never starts, stops or kills anything. The two rules it
+;; checks: a .nrepl-port file is a claim, not a fact, so ask the port; a REPL
+;; that answers may still belong to another checkout, so ask it where it is
+;; running.
 
 (ns session-status
   (:require

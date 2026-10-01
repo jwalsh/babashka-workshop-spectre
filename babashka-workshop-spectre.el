@@ -6,25 +6,41 @@
 
 ;;; Commentary:
 ;; REPL wiring for the Spectre workshop.  Same family as tech-crawler/tc.el
-;; and build-a-clojure.el: a babashka nREPL on :1667, CIDER attached to it,
-;; paredit in the Clojure buffers.
+;; and build-a-clojure.el: a babashka nREPL, CIDER attached to it, paredit
+;; in the Clojure buffers.
 ;;
-;;   M-x load-file RET babashka-workshop-spectre.el
-;;   Launch from a shell with `-nw -l babashka-workshop-spectre.el', then:
-;;   M-x spectre-jack-in    ; CIDER starts its own bb nREPL on a free port;
-;;                          ; the one to use when several worktrees are open
-;;   M-x spectre-session    ; jack in and load the current buffer
-;;   M-x spectre-nrepl      ; `bb dev' on the fixed port, then connect CIDER
-;;   M-x spectre-nrepl-jvm  ; `bb dev --jvm', the same code with cider-nrepl
-;;   M-x spectre-connect    ; attach to whatever already listens on :1667,
-;;                          ; e.g. `bb tui2 --nrepl' running in a terminal
-;;   M-x spectre-todos      ; the TODOs left, as links
-;;   M-x spectre-screenshare ; keycast in the header line, for recordings
-;;   M-x spectre-test-ns    ; `bb test --nses' for the buffer's namespace
-;;   M-x spectre-lsp        ; lsp-mode here, unblocking the checkout first
+;; Load it with `gmake session' (tmux) or `gmake demo' (a frame), which also
+;; jack in, or by hand: M-x load-file RET babashka-workshop-spectre.el.
 ;;
-;; `spectre-map' holds all of it; bind it under a prefix, e.g.
+;; The commands, with their key in `spectre-map':
+;;
+;;   i  spectre-jack-in      CIDER starts its own bb nREPL on a free port;
+;;                           the one to use when several worktrees are open
+;;   s  spectre-session      jack in and load the current buffer
+;;   n  spectre-nrepl        `bb dev' on the fixed port, then connect CIDER
+;;   j  spectre-nrepl-jvm    `bb dev --jvm': the same code with cider-nrepl,
+;;                           for apropos, jump to library source, debugger
+;;   c  spectre-connect      attach to whatever listens on the fixed port,
+;;                           e.g. `bb tui2 --nrepl' running in a terminal
+;;   q  spectre-nrepl-stop   stop the nREPL started by n or j
+;;   t  spectre-test-ns      `bb test --nses' for the buffer's namespace
+;;   T  spectre-test         every required exercise's tests
+;;   o  spectre-todos        the TODOs left, as links
+;;   e  spectre-exercises    open exercises.org
+;;   k  spectre-screenshare  keycast in the header line, for recordings
+;;   l  spectre-lsp          lsp-mode here, unblocking the checkout first
+;;
+;; The fixed port is NREPL_PORT as Emacs was started with it, which .envrc
+;; derives per checkout: 1667 in the main one.  `spectre-map' is bound to
+;; nothing; put it under a prefix:
 ;;   (global-set-key (kbd "C-c s") spectre-map)
+;;
+;; Loading the file also switches on: paredit and rainbow-delimiters in
+;; Clojure buffers when installed, per-form evaluation inside (comment ...)
+;; blocks, keycast in the header line when installed, a log of every nREPL
+;; message, and clj-kondo through Flymake for Clojure files inside a Spectre
+;; checkout.  It turns native-compiled trampolines off, so that CIDER's
+;; menus open where libgccjit is broken.
 
 ;;; Code:
 

@@ -1,3 +1,7 @@
+# The fixed nREPL port. .envrc exports this checkout's own (1667 in the main
+# checkout, 1700-1999 in a worktree); 1667 here is only what is left when
+# direnv has not loaded it. In a worktree run gmake through `direnv exec .`
+# unless your shell did: `gmake status` says when the two disagree.
 NREPL_PORT ?= 1667
 # tmux session for this checkout: spectre in the main one, spectre-<dir> in a worktree
 SESSION    ?= spectre$(if $(wildcard .git/HEAD),,-$(notdir $(CURDIR)))
@@ -129,7 +133,7 @@ e5: ## E5 charm.clj TUI, required TODOs
 e5-optional: ## E5 including the optional figure-test
 	bb test --nses spectre.tui2-test
 
-e5-tui: ## E5 run the TUI with an nREPL on NREPL_PORT (1667) (needs a real terminal)
+e5-tui: ## E5 run the TUI with an nREPL on this checkout's NREPL_PORT (needs a real terminal)
 	bb tui2 --nrepl --port $(NREPL_PORT)
 
 # E6 has no tests; this checks the launcher from outside the repo.
@@ -137,15 +141,15 @@ e6: ## E6 check a pw launcher is on PATH and runs from another directory
 	@command -v pw || { echo "pw is not on PATH yet; see E6 in exercises.org"; exit 1; }
 	cd / && pw --help
 
-seed: ## Add example sites to db.edn (SPECTRE_DB or ~/.config/spectre-db.edn)
+seed: ## Add example sites to db.edn (SPECTRE_DB, else ~/.config/spectre/db.edn); writes nothing before E3
 	bb db:seed
 
-nrepl: ## babashka nREPL on NREPL_PORT (1667) (cider-connect-clj, or M-x spectre-connect)
+nrepl: ## babashka nREPL on this checkout's NREPL_PORT (cider-connect-clj, or M-x spectre-connect)
 	@if lsof -i :$(NREPL_PORT) >/dev/null 2>&1; then echo "nREPL already up on $(NREPL_PORT)"; else bb dev --port $(NREPL_PORT); fi
 
-nrepl-jvm: ## Same code on a JVM Clojure with cider-nrepl, on NREPL_PORT (1667)
+nrepl-jvm: ## Same code on a JVM Clojure with cider-nrepl, same port: apropos, jump to library source, debugger
 	@if lsof -i :$(NREPL_PORT) >/dev/null 2>&1; then echo "nREPL already up on $(NREPL_PORT)"; else bb dev --jvm --port $(NREPL_PORT); fi
 
-nrepl-stop: ## Stop the nREPL on NREPL_PORT (1667)
+nrepl-stop: ## Stop the nREPL on this checkout's NREPL_PORT
 	@pid=$$(lsof -ti :$(NREPL_PORT) 2>/dev/null); \
 	if [ -n "$$pid" ]; then kill $$pid && echo "Stopped nREPL on $(NREPL_PORT)"; else echo "nREPL not running"; fi
