@@ -59,9 +59,11 @@ about some other code.
 A second hook, `clj-paren-repair-claude-hook` (from clojure-mcp-light, on
 PATH from `~/.local/bin`), runs before and after every Write and Edit and
 balances the delimiters of a Clojure file. What lands on disk can therefore
-differ from what you wrote: if a form mattered, read it back. It runs
-without `--cljfmt`, so the workshop's formatting is left alone, and without
-`--log-level`, which would write a log file into the checkout.
+differ from what you wrote: if a form mattered, read it back. It runs with
+`--cljfmt`, which reformats the file after each edit: the workshop's sources
+already conform (`cljfmt check src test dev` is clean), so an edit changes
+only what it changed. It runs without `--log-level`, which would write a log
+file into the checkout.
 
 ## Surfaces
 
