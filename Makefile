@@ -1,9 +1,12 @@
 NREPL_PORT ?= 1667
+# tmux session for this checkout: spectre in the main one, spectre-<dir> in a worktree
+SESSION    ?= spectre$(if $(wildcard .git/HEAD),,-$(notdir $(CURDIR)))
+FILE       ?= src/spectre/core.clj
 SHELL := bash
 
 .DEFAULT_GOAL := help
 
-.PHONY: help FORCE deps deps-emacs todos agenda elisp test e1 e2 e2-clipboard e3 e4 e5 e5-optional e5-tui e6 seed nrepl nrepl-jvm nrepl-stop
+.PHONY: help FORCE session session-shot session-stop deps deps-emacs todos agenda namespaces elisp test e1 e2 e2-clipboard e3 e4 e5 e5-optional e5-tui e6 seed nrepl nrepl-jvm nrepl-stop
 
 help: ## Show available targets
 	@grep -E '^[a-zA-Z0-9_.-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-14s %s\n", $$1, $$2}'
@@ -34,8 +37,27 @@ deps-emacs: ## Exercise the Emacs packages: clojure-mode, paredit, CIDER jack-in
 todos: ## List the TODOs left in the exercises (E=e3 for one, SRC=1 to skip tests)
 	@bb -cp dev -m workshop.todos $(if $(E),--exercise $(E)) $(if $(SRC),--src-only)
 
+namespaces: ## Namespaces in load order with their requires (NS=spectre.cli for one and what it loads)
+	@bb -cp dev -m workshop.namespaces $(if $(NS),--from $(NS))
+
 agenda: ## List the TODO headings in the Org files with their deadlines (ALL=1 for done ones too)
 	@bb -cp dev -m workshop.agenda $(if $(ALL),--all)
+
+# One Emacs in a detached tmux session, jacked in with FILE loaded. You attach
+# to it; an agent reads it with session-shot and evaluates in the same REPL
+# through .nrepl-port (brepl -e '(...)'). direnv exec gives it this
+# checkout's environment whatever the tmux server was started with.
+session: ## Emacs in tmux, jacked in, FILE loaded (default core.clj); attach with tmux attach -t $(SESSION)
+	@if tmux has-session -t $(SESSION) 2>/dev/null; then echo "session $(SESSION) already running"; else \
+	  tmux new-session -d -s $(SESSION) -x 140 -y 44 -c "$(CURDIR)" \
+	    "$$(command -v direnv >/dev/null && echo 'direnv exec .') emacs -nw -l babashka-workshop-spectre.el $(FILE) -f spectre-session" && \
+	  echo "started $(SESSION): tmux attach -t $(SESSION)"; fi
+
+session-shot: ## Print what the session's screen shows right now
+	@tmux capture-pane -t $(SESSION) -p
+
+session-stop: ## Stop the session and its REPL
+	@tmux kill-session -t $(SESSION) 2>/dev/null && echo "stopped $(SESSION)" || echo "no session $(SESSION)"
 
 # Native-comp trampolines are off: package-lint advises `message', and a
 # broken libgccjit should not fail a lint run.
