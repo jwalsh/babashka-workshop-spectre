@@ -50,6 +50,8 @@ A claim about what the code does should come from running it.
 
 `exercises.org` is the exercise text; `walkthrough.org` is the reading order
 for `core.clj` and what loads what.
+`.meta/experience-report.md` is the report from the setup session: findings,
+what was never verified, and what is open. Read it when starting cold.
 
 ## Worktrees
 
