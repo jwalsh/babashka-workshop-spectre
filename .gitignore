@@ -3,3 +3,4 @@
 .clj-kondo/.cache
 db.edn
 .env
+.bin/
