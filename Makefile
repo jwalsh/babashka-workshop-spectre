@@ -2,13 +2,17 @@ NREPL_PORT ?= 1667
 # tmux session for this checkout: spectre in the main one, spectre-<dir> in a worktree
 SESSION    ?= spectre$(if $(wildcard .git/HEAD),,-$(notdir $(CURDIR)))
 FILE       ?= src/spectre/core.clj
+# Whichever Emacs is first on PATH; EMACS=/path/to/emacs for another build.
+# Set with =, not ?=: make predefines EMACS in some environments (inside an
+# Emacs shell it is "t").
+EMACS      := $(if $(filter-out t,$(EMACS)),$(EMACS),emacs)
 # Universal Ctags. macOS's /usr/bin/ctags is a different program with no Clojure parser.
 CTAGS      ?= $(firstword $(wildcard /opt/homebrew/opt/universal-ctags/bin/ctags /usr/local/opt/universal-ctags/bin/ctags) ctags)
 SHELL := bash
 
 .DEFAULT_GOAL := help
 
-.PHONY: help FORCE session session-shot session-stop status tags deps deps-emacs todos agenda namespaces elisp test e1 e2 e2-clipboard e3 e4 e5 e5-optional e5-tui e6 seed nrepl nrepl-jvm nrepl-stop
+.PHONY: help FORCE demo session session-shot session-stop status tags deps deps-emacs todos agenda namespaces elisp test e1 e2 e2-clipboard e3 e4 e5 e5-optional e5-tui e6 seed nrepl nrepl-jvm nrepl-stop
 
 help: ## Show available targets
 	@grep -E '^[a-zA-Z0-9_.-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-14s %s\n", $$1, $$2}'
@@ -69,8 +73,17 @@ agenda: ## List the TODO headings in the Org files with their deadlines (ALL=1 f
 session: ## Emacs in tmux, jacked in, FILE loaded (default core.clj); attach with tmux attach -t $(SESSION)
 	@if tmux has-session -t $(SESSION) 2>/dev/null; then echo "session $(SESSION) already running"; else \
 	  tmux new-session -d -s $(SESSION) -x 140 -y 44 -c "$(CURDIR)" \
-	    "$$(command -v direnv >/dev/null && echo 'direnv exec .') emacs -nw -l babashka-workshop-spectre.el $(FILE) -f spectre-session" && \
+	    "$$(command -v direnv >/dev/null && echo 'direnv exec .') $(EMACS) -nw -l babashka-workshop-spectre.el $(FILE) -f spectre-session" && \
 	  echo "started $(SESSION): tmux attach -t $(SESSION)"; fi
+
+# The same thing in a graphical frame, for sitting in front of: your init
+# file, this checkout's environment, detached from the shell that ran it.
+# No tmux, so session-shot has nothing to print; brepl and `gmake status`
+# still reach its REPL through .nrepl-port.
+demo: ## Graphical Emacs, jacked in, FILE loaded (EMACS=/path/to/emacs for another build)
+	@if [ -f .nrepl-port ]; then echo "a REPL is already recorded in .nrepl-port; see gmake status"; else \
+	  nohup $$(command -v direnv >/dev/null && echo 'direnv exec .') $(EMACS) -l babashka-workshop-spectre.el $(FILE) -f spectre-session >/dev/null 2>&1 & \
+	  echo "started $(EMACS) on $(FILE); gmake status once it has jacked in"; fi
 
 session-shot: ## Print what the session's screen shows right now
 	@tmux capture-pane -t $(SESSION) -p
@@ -83,7 +96,7 @@ status: ## Is the REPL live and this checkout's, is the tmux session up (also th
 
 # Native-comp trampolines are off: package-lint advises `message', and a
 # broken libgccjit should not fail a lint run.
-EMACS_BATCH := emacs --batch --eval '(setq native-comp-enable-subr-trampolines nil)' --eval '(package-initialize)' -L .
+EMACS_BATCH := $(EMACS) --batch --eval '(setq native-comp-enable-subr-trampolines nil)' --eval '(package-initialize)' -L .
 
 elisp: ## Byte-compile, checkdoc and ERT for the Emacs wiring
 	@$(EMACS_BATCH) --eval '(setq byte-compile-error-on-warn t)' -f batch-byte-compile babashka-workshop-spectre.el
