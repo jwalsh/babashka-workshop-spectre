@@ -245,3 +245,14 @@ order is not by number. Each was hit, not reasoned to.
     can print its own, and this one went on to pipe into `mmdc`: the dry run
     started a browser, and would have written the image had what it was fed
     been a diagram. The view is run directly now, and the dry run prints.
+
+## The exercises themselves
+
+53. **Ten minutes was for the writing, not for the finding out.** The session
+    allowed E1 ten minutes, by the owner's account: five assertions, a line
+    each. Finding out what to assert took far longer, as probes in the
+    `comment` block of `core.clj`, because the inputs have a structure the
+    task does not state: the variant is used in two steps, the template does
+    not follow it, and the options are a map that a keyword passes for (52).
+    None of that was property-based yet. `walkthrough.org` lists the five
+    checks as REPL forms under *What each input changes*.
