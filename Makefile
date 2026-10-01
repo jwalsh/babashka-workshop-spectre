@@ -43,10 +43,11 @@ namespaces: ## Namespaces in load order with their requires (NS=spectre.cli for 
 	@bb -cp dev -m workshop.namespaces $(if $(NS),--from $(NS))
 
 # The symbol index, in place of a code graph: nothing here parses Clojure for
-# one. Options are in .ctags.d/. tags is for grep, readtags and vi; TAGS is
-# the Emacs format. Both are ignored locally.
+# one. Options are in .ctags.d/. One file, ignored locally: no Emacs-format
+# TAGS beside it, because on a case-insensitive filesystem that is the same
+# file as tags, and CIDER and the language server do the jumping in Emacs.
 tags: ## Symbol index with Universal Ctags: every defn, defn-, def, deftest and ns with its line
-	@$(CTAGS) -R -f tags src test dev && $(CTAGS) -R -e -f TAGS src test dev && echo "$$(grep -vc '^!' tags) tags in ./tags and ./TAGS"
+	@$(CTAGS) -R -f tags src test dev && echo "$$(grep -vc '^!' tags) tags in ./tags"
 
 agenda: ## List the TODO headings in the Org files with their deadlines (ALL=1 for done ones too)
 	@bb -cp dev -m workshop.agenda $(if $(ALL),--all)

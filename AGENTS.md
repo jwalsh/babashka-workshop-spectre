@@ -20,6 +20,13 @@ tooling for working through it.
   workshop.<name>` or through its `gmake` target.
 - **The exercise stubs are the user's to fill in.** Do not complete a TODO in
   `src/` or `test/` unless asked to. `gmake todos` lists them.
+- **No allocation state in the repo, ignored or not.** Ports, pids, locks and
+  logs that the tooling records belong under `${XDG_STATE_HOME:-~/.local/state}`,
+  keyed by checkout path. Today nothing is recorded: the fixed port is
+  computed from the directory name each time, and the tmux session is found
+  by name. The one port file in the tree, `.nrepl-port`, is babashka's own:
+  it writes it on start, removes it on exit, and `brepl` and CIDER look for
+  it there. Do not add siblings to it.
 - Conventional commits, co-author as a `--trailer`. Run `gmake elisp` and
   `clj-kondo --lint dev` before committing changes to the tooling.
 
@@ -37,9 +44,9 @@ A claim about what the code does should come from running it.
 - `clojure-lsp diagnostics`, `clojure-lsp references --from ns/var` for
   static questions. There is no Clojure LSP plugin or MCP server configured.
 - `gmake tags` writes `./tags` (Universal Ctags): one line per `defn`,
-  `defn-`, `def`, `deftest` and `ns`, with file and line. `grep -P
-  '^derive\t' tags` finds a definition. GitNexus does not parse Clojure (its
-  index of this repo holds files only), so do not use it here.
+  `defn-`, `def`, `deftest` and `ns`, with file and line. `awk -F'\t'
+  '$1=="derive"' tags` finds a definition. GitNexus does not parse Clojure
+  (its index of this repo holds files only), so do not use it here.
 
 A SessionStart hook (`.claude/settings.json`) runs `dev/session-status.bb`
 and puts the result in your context: whether `.nrepl-port` points at a live

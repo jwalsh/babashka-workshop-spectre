@@ -99,6 +99,34 @@ Design choices worth keeping:
 11. **A file-backed make target cannot warn when the file exists** without a
     `FORCE` prerequisite; `gmake .env` uses one and never overwrites.
 
+12. **GitNexus does not parse Clojure.** `analyze` indexed 34 files, 6
+    folders and 5 Markdown sections: no functions, no call edges. It also
+    appends a block of "MUST run impact before editing" rules to `AGENTS.md`
+    and creates `CLAUDE.md` and `.claude/skills/`. Those were reverted. The
+    symbol index is Universal Ctags instead (`gmake tags`, options in
+    `.ctags.d/`); its built-in Clojure parser tags only `defn` and `ns`, so
+    `defn-`, `def` and `deftest` are added by regex.
+13. **In a ctags regex bracket, `\n` is a backslash and an `n`**, so
+    `[^ \t\n()]` truncated `openssl` to `ope`. Leave `\n` out.
+14. **`tags` and `TAGS` are one file on macOS's case-insensitive
+    filesystem.** Writing the Emacs format second overwrote the first. Only
+    `tags` is written.
+15. **macOS `grep` has no `-P`**, and `/usr/bin/make`, `/usr/bin/ctags` and
+    `/usr/bin/git` are shims that fail without the Command Line Tools. Use
+    `gmake`, the Homebrew `git`, and the Universal Ctags path the Makefile
+    finds.
+16. **A `.nrepl-port` file is a claim.** `dev/session-status.bb` (the
+    SessionStart hook, also `gmake status`) connects to the port and asks the
+    REPL for its working directory, which catches both a stale file and a
+    REPL that belongs to another checkout. After `gmake session-stop` the
+    babashka process takes a second or two to exit and remove the file.
+
+Added after the first version of this report: the SessionStart hook in
+`.claude/settings.json`, `gmake status`, `gmake tags`, and the rule (in
+`AGENTS.md`) that allocation state goes under `XDG_STATE_HOME`, never in the
+repo. The hook has been run by hand in all four states (no REPL, stale, live,
+wrong checkout); it has **not** been seen firing in a real session start.
+
 ## Not verified
 
 - Two checkouts jacked in side by side. The derivation and the root
