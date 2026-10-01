@@ -49,6 +49,15 @@ namespaces: ## Namespaces in load order with their requires (NS=spectre.cli for 
 tags: ## Symbol index with Universal Ctags: every defn, defn-, def, deftest and ns with its line
 	@$(CTAGS) -R -f tags src test dev && echo "$$(grep -vc '^!' tags) tags in ./tags"
 
+# A real file target, rebuilt only when a source file is newer. Emacs's own
+# etags has no Clojure parser, but its Lisp one tags every (def... form.
+# Named ETAGS because TAGS would be the same file as tags here. Ignored
+# locally. In Emacs: M-x visit-tags-table RET ETAGS.
+CLOJURE_SOURCES := $(shell find src test dev -name '*.clj' -o -name '*.bb')
+
+ETAGS: $(CLOJURE_SOURCES) ## Emacs tags table for the Clojure sources (rebuilt when they change)
+	@etags --language=lisp -o $@ $(CLOJURE_SOURCES) && echo "$$(grep -c $$'\x7f' $@) tags in ./$@"
+
 agenda: ## List the TODO headings in the Org files with their deadlines (ALL=1 for done ones too)
 	@bb -cp dev -m workshop.agenda $(if $(ALL),--all)
 
