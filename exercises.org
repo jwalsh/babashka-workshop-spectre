@@ -6,6 +6,8 @@
 # and the "N failures" line are the whole result.
 #+PROPERTY: header-args:sh :results output verbatim :exports both :prologue "{" :epilogue "} 2>&1 | sed '/^----- Error/,$d'"
 
+* DONE Overview 
+
 Tests fail until you complete the exercises. They use temporary files and in-memory data.
 
 Run all tests at any point with:
@@ -37,7 +39,7 @@ bb test --vars spectre.cli-test/spec-test
 
 You can also select by test metadata with ~--includes~ / ~--excludes~, e.g. ~bb test --excludes :clipboard~ to skip the real-clipboard test in E2.
 
-* How these are worked here
+* DONE How these are worked here
 
 This section, and the /Working it here/ under each exercise, are local to this checkout. The exercise text is the workshop's.
 
@@ -104,11 +106,11 @@ Read through [[file:src/spectre/core.clj][src/spectre/core.clj]] before doing an
 
 [[file:test/spectre/core_test.clj][test/spectre/core_test.clj]] has only one test, checking a single known name/password/site combination against its expected output. Add a few more sanity tests of your own to that namespace:
 
-- Derive a password for the same name and master password but a different ~site~, and check it differs from the existing example.
-- Derive with a different ~variant~ (~:login~, ~:answer~) and check that changes the result too.
-- Derive with a different ~template~ (e.g. ~:maximum~, ~:pin~, ~:short~) and check the length/shape looks right for that template.
-- Bump ~:counter~ and check you get a different password again.
-- Check that two calls with the same arguments return the same password.
+1. Derive a password for the same name and master password but a different ~site~, and check it differs from the existing example.
+2. Derive with a different ~variant~ (~:login~, ~:answer~) and check that changes the result too.
+3. Derive with a different ~template~ (e.g. ~:maximum~, ~:pin~, ~:short~) and check the length/shape looks right for that template.
+4. Bump ~:counter~ and check you get a different password again.
+5. Check that two calls with the same arguments return the same password.
 
 There is also ~spectre.scrypt-ffi~, an alternative to ~spectre.scrypt~ that calls into libsodium directly via Babashka's FFI support instead of shelling out to the ~openssl~ binary. It is not wired in by default (~core.clj~ requires ~spectre.scrypt~, with the FFI require commented out below it). If you have libsodium installed and a Babashka build with FFI support, try swapping the two requires in ~core.clj~ and confirming the same tests still pass. Each namespace also has its own ~comment~ block with a known input/output pair you can check directly at the REPL.
 
@@ -126,7 +128,7 @@ bb test --nses spectre.core-test
 - ~gmake e1~ passes before you start, on the one test given. This exercise only adds tests.
 
 * TODO E2
-DEADLINE: <2026-10-01 Thu>
+DEADLINE: <2026-10-02 Fri>
 
 [[file:src/spectre/clipboard.clj][src/spectre/clipboard.clj]] is a skeleton with two functions to write:
 
@@ -182,7 +184,7 @@ real-clipboard-test        (tool), and copy! with one argument; only with SPECTR
 - ~bb pw a.example.com --print~ already prints a password and never reaches ~copy!~. To see the clipboard path from the CLI you need a real terminal and no ~--print~.
 
 * TODO E3
-DEADLINE: <2026-10-01 Thu>
+DEADLINE: <2026-10-02 Fri>
 
 [[file:src/spectre/db.clj][src/spectre/db.clj]] stores per-site settings (~:counter~, ~:template~, ~:variant~) in an EDN file, shaped like:
 
@@ -245,7 +247,7 @@ merge-site!      spectre.tui2/update-edit    Enter on the edit screen
 - ~default-path~ is a ~def~. Evaluate it to see where this REPL's database is; changing ~SPECTRE_DB~ afterwards changes nothing until the namespace is reloaded.
 
 * TODO E4
-DEADLINE: <2026-10-01 Thu>
+DEADLINE: <2026-10-03 Sat>
 
 [[file:src/spectre/cli.clj][src/spectre/cli.clj]] wires ~spectre.core~, ~spectre.clipboard~, ~spectre.db~ and ~spectre.identicon~ into the ~pw~ command.
 
@@ -289,7 +291,7 @@ bb pw <site> [flags]     bb.edn sends it to spectre.cli/generate; babashka.cli p
 - From a shell, with the identity ~.env~ supplies: ~bb pw a.example.com --print~. It works before this exercise, on defaults only, and stores nothing. The messages the finished version prints for a new site, a stored one, and a flag that disagrees are in [[file:.meta/conj-26-review.md][.meta/conj-26-review.md]].
 
 * TODO E5
-DEADLINE: <2026-10-01 Thu>
+DEADLINE: <2026-10-03 Sat>
 
 Complete ~spectre.tui2~, built on [[https://github.com/TimoKramer/charm.clj][charm.clj]], a Bubble Tea-style TUI toolkit.
 See ~spectre.tui~ for a comparable implementation of the TUI using JLine.
@@ -378,7 +380,7 @@ gmake todos E=e5 SRC=1
 - What the finished TUI does at the edges, such as wraparound, the counter's floor and what a filter keeps, is in [[file:.meta/conj-26-review.md][.meta/conj-26-review.md]]. Driving a TUI through tmux has traps of its own: [[file:.meta/findings.md][.meta/findings.md]], under /Observing a TUI through tmux/.
 
 * TODO E6
-DEADLINE: <2026-10-01 Thu>
+DEADLINE: <2026-10-03 Sat>
 
 Run the CLI from another directory using each of these methods.
 
