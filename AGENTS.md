@@ -56,6 +56,25 @@ and whether it is up. `gmake status` runs the same check. Read it before
 evaluating anything: a stale or wrong-checkout port means your results are
 about some other code.
 
+## Surfaces
+
+Files on disk are one surface among several here. Each of the others answers
+a question the files cannot, and each has a way to go wrong.
+
+| surface | answers | reach it with | goes wrong when |
+|---|---|---|---|
+| files | what is written | read, grep | the stub compiles and returns `nil` |
+| symbol index | where a name is defined | `.tags`, `TAGS` | `.tags` not regenerated; `TAGS` only rebuilds on a newer source |
+| namespace graph | what loads what, in order | `gmake namespaces` | needs `clj-kondo` |
+| static analysis | references, diagnostics | `clojure-lsp references`, `diagnostics` | macros and dynamic calls it cannot see |
+| live REPL | what the code does | `brepl -e`, `.nrepl-port` | stale port, or a REPL from another checkout |
+| editor screen | what the owner is looking at | `gmake session-shot` | no session running |
+| session status | whether the two above can be trusted | SessionStart hook, `gmake status` | read once at start, then things change: rerun it |
+| exercise state | what is left and when it is due | `gmake todos`, `gmake agenda` | TODO markers removed without the test passing |
+
+Prefer the surface that answers by execution over the one that answers by
+reading, and say which one a claim came from.
+
 ## Finding your way
 
 | want | run |
