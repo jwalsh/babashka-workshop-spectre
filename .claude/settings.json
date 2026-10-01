@@ -5,6 +5,26 @@
         "type" : "command",
         "command" : "bb \"$CLAUDE_PROJECT_DIR/dev/session-status.bb\""
       } ]
+    } ],
+    "PreToolUse" : [ {
+      "matcher" : "Write|Edit",
+      "hooks" : [ {
+        "type" : "command",
+        "command" : "clj-paren-repair-claude-hook"
+      } ]
+    } ],
+    "PostToolUse" : [ {
+      "matcher" : "Edit|Write",
+      "hooks" : [ {
+        "type" : "command",
+        "command" : "clj-paren-repair-claude-hook"
+      } ]
+    } ],
+    "SessionEnd" : [ {
+      "hooks" : [ {
+        "type" : "command",
+        "command" : "clj-paren-repair-claude-hook"
+      } ]
     } ]
   }
 }
