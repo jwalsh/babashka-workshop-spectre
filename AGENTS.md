@@ -53,6 +53,10 @@ for `core.clj` and what loads what.
 `.meta/experience-report.md` is the report from the setup session: findings,
 what was never verified, and what is open. Read it when starting cold.
 
+Findings go in `.meta/` as you hit them: experiments, deviations from the
+workshop, testing lessons, tooling and DX notes. This repo has no git notes,
+so do not start keeping them there; one place is enough.
+
 ## Worktrees
 
 Exercises are worked in branches under `worktrees/` (ignored via
