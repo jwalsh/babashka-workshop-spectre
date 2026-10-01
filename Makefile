@@ -79,10 +79,11 @@ session: ## Emacs in tmux, jacked in, FILE loaded (default core.clj); attach wit
 # The same thing in a graphical frame, for sitting in front of: your init
 # file, this checkout's environment, detached from the shell that ran it.
 # No tmux, so session-shot has nothing to print; brepl and `gmake status`
-# still reach its REPL through .nrepl-port.
+# still reach its REPL through .nrepl-port. Absolute paths: by the time a
+# long init file has run, a bare `-l name.el' is no longer found here.
 demo: ## Graphical Emacs, jacked in, FILE loaded (EMACS=/path/to/emacs for another build)
 	@if [ -f .nrepl-port ]; then echo "a REPL is already recorded in .nrepl-port; see gmake status"; else \
-	  nohup $$(command -v direnv >/dev/null && echo 'direnv exec .') $(EMACS) -l babashka-workshop-spectre.el $(FILE) -f spectre-session >/dev/null 2>&1 & \
+	  nohup $$(command -v direnv >/dev/null && echo 'direnv exec .') $(EMACS) -l "$(CURDIR)/babashka-workshop-spectre.el" "$(CURDIR)/$(FILE)" -f spectre-session >/dev/null 2>&1 & \
 	  echo "started $(EMACS) on $(FILE); gmake status once it has jacked in"; fi
 
 session-shot: ## Print what the session's screen shows right now
