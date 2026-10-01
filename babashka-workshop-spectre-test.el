@@ -73,6 +73,23 @@
                                       root)))
     (should-not (spectre--blocking nil root))))
 
+(ert-deftest spectre-test-kondo-reports-a-finding ()
+  "The Flymake backend turns a clj-kondo warning into a diagnostic on its line."
+  (skip-unless (executable-find "clj-kondo"))
+  (with-temp-buffer
+    ;; a buffer with no file is linted as stdin.clj, so the ns has to agree
+    (insert "(ns stdin)\n\n(defn add [left right]\n  (let [unused 1]\n    (+ left right)))\n")
+    (let ((reported 'pending)
+          (waited 0))
+      (spectre-flymake-kondo (lambda (diagnostics &rest _) (setq reported diagnostics)))
+      (while (and (eq reported 'pending) (< waited 100))
+        (accept-process-output nil 0.1)
+        (setq waited (1+ waited)))
+      (should (= 1 (length reported)))
+      (should (eq :warning (flymake-diagnostic-type (car reported))))
+      (should (string-match-p "unused" (flymake-diagnostic-text (car reported))))
+      (should (= 4 (line-number-at-pos (flymake-diagnostic-beg (car reported))))))))
+
 (ert-deftest spectre-test-no-unsafe-dir-locals ()
   "Opening a file must not prompt: every dir-local is a safe one."
   (let ((dir-locals (with-temp-buffer

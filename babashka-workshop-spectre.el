@@ -29,6 +29,7 @@
 ;;; Code:
 
 (require 'compile)
+(require 'flymake)
 (require 'seq)
 (require 'subr-x)
 
@@ -281,6 +282,73 @@ file, which is shared by every project."
         (when buffer-file-name
           (lsp)))
     (message "lsp-mode is not installed")))
+
+;;;; Linting
+
+;; clj-kondo as a Flymake backend, written out here so that it needs no
+;; package: Flymake is built in, and the linter is one process reading the
+;; buffer on stdin.  It runs from the checkout root, where .clj-kondo is.
+
+(defvar-local spectre--kondo-process nil
+  "The clj-kondo process checking this buffer, if one is running.")
+
+(defconst spectre--kondo-line
+  "^[^:\n]+:\\([0-9]+\\):\\([0-9]+\\): \\(error\\|warning\\|info\\): \\(.*\\)$"
+  "A clj-kondo finding: file, line, column, level, message.")
+
+(defun spectre--kondo-diagnostics (source)
+  "Flymake diagnostics for SOURCE from clj-kondo output in the current buffer."
+  (let (diagnostics)
+    (goto-char (point-min))
+    (while (re-search-forward spectre--kondo-line nil t)
+      (let* ((line (string-to-number (match-string 1)))
+             (column (string-to-number (match-string 2)))
+             (level (match-string 3))
+             (message (match-string 4))
+             (region (flymake-diag-region source line column)))
+        (push (flymake-make-diagnostic
+               source (car region) (cdr region)
+               (pcase level ("error" :error) ("warning" :warning) (_ :note))
+               message)
+              diagnostics)))
+    (nreverse diagnostics)))
+
+(defun spectre-flymake-kondo (report-fn &rest _args)
+  "Flymake backend: lint the buffer with clj-kondo and call REPORT-FN."
+  (when (process-live-p spectre--kondo-process)
+    (kill-process spectre--kondo-process))
+  (let ((source (current-buffer))
+        (default-directory (spectre--root)))
+    (setq spectre--kondo-process
+          (make-process
+           :name "spectre-kondo" :noquery t :connection-type 'pipe
+           :buffer (generate-new-buffer " *spectre-kondo*")
+           :command (list "clj-kondo" "--lint" "-" "--filename"
+                          (or buffer-file-name "stdin.clj"))
+           :sentinel
+           (lambda (process _event)
+             (when (memq (process-status process) '(exit signal))
+               (unwind-protect
+                   (when (and (buffer-live-p source)
+                              (eq process (buffer-local-value
+                                           'spectre--kondo-process source)))
+                     (with-current-buffer (process-buffer process)
+                       (funcall report-fn (spectre--kondo-diagnostics source))))
+                 (kill-buffer (process-buffer process)))))))
+    (save-restriction
+      (widen)
+      (process-send-region spectre--kondo-process (point-min) (point-max))
+      (process-send-eof spectre--kondo-process))))
+
+(defun spectre--flymake ()
+  "Lint this buffer with clj-kondo when it is a file in a Spectre checkout."
+  (when (and buffer-file-name
+             (executable-find "clj-kondo")
+             (file-in-directory-p buffer-file-name (spectre--root)))
+    (add-hook 'flymake-diagnostic-functions #'spectre-flymake-kondo nil t)
+    (flymake-mode 1)))
+
+(add-hook 'clojure-mode-hook #'spectre--flymake)
 
 ;;;; Tests
 
