@@ -104,6 +104,18 @@
   (derive (master-key full-name master-password (:variant opts :password)) site opts))
 
 (comment
+
+  (master-key "Alice" "a b c d" :password)
+  (alength (master-key "Alice" "a b c d" :password))
+  (take 8 (master-key "Alice" "a b c d" :password))
+  (take 8 (master-key "Alice" "a b c d" :login))
+  (derive (master-key "Alice" "a b c d" :password) "a.example.com" {:variant :password :template :long})
+  (derive (master-key "Alice" "a b c d") "a.example.com")
+
+  (password "Alice" "a b c d" "a.example.com" {:variant :password :template :long})
+  (password "Bob" "b c d e" "b.example.com" {:variant :password :template :medium})
+  (password "Charlie" "c d e" "c.example.com" {:variant :password :template :short})
+  
   (def my-pass (password "John Doe"
                          "correct horse battery staple"
                          "example.com"
