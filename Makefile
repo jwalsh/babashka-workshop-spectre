@@ -1,14 +1,34 @@
 NREPL_PORT ?= 1667
+SHELL := bash
 
 .DEFAULT_GOAL := help
 
-.PHONY: help deps todos agenda elisp test e1 e2 e2-clipboard e3 e4 e5 e5-optional e5-tui e6 seed nrepl nrepl-jvm nrepl-stop
+.PHONY: help FORCE deps deps-emacs todos agenda elisp test e1 e2 e2-clipboard e3 e4 e5 e5-optional e5-tui e6 seed nrepl nrepl-jvm nrepl-stop
 
 help: ## Show available targets
-	@grep -E '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-14s %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z0-9_.-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-14s %s\n", $$1, $$2}'
+
+# FORCE makes the recipe run even when .env exists, so it can say so. An
+# existing .env is never overwritten.
+.env: FORCE ## Create .env from .env.template; warns and leaves an existing one alone
+	@if [ -e .env ]; then \
+	  echo "warning: .env already exists, leaving it alone" >&2; \
+	  if ! diff -q <(grep -oE '^#?[A-Z_]+=' .env.template | tr -d '#' | sort -u) <(grep -oE '^#?[A-Z_]+=' .env | tr -d '#' | sort -u) >/dev/null; then \
+	    echo "warning: its variables differ from .env.template; compare with: diff .env.template .env" >&2; \
+	  fi; \
+	else \
+	  cp .env.template .env && echo "created .env from .env.template"; \
+	fi
+
+FORCE:
 
 deps: ## Show the workshop dependencies and what is installed
 	@bb dev/deps.bb
+
+# Batch Emacs with the installed packages but not your init file. The noise
+# CIDER and the REPL write to stderr is dropped; the table is on stdout.
+deps-emacs: ## Exercise the Emacs packages: clojure-mode, paredit, CIDER jack-in, lsp, org
+	@$(EMACS_BATCH) -l babashka-workshop-spectre.el -l dev/emacs-deps.el -f spectre-deps-report 2>/dev/null
 
 # gmake todos E=e3 narrows to one exercise; SRC=1 skips test/.
 todos: ## List the TODOs left in the exercises (E=e3 for one, SRC=1 to skip tests)
