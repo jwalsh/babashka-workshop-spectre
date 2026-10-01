@@ -11,37 +11,51 @@ plugin ships no code; it runs the `clojure-lsp` already on PATH with `listen`.
 
 ## Install
 
-From a Claude Code session in this checkout:
+From a shell in this checkout, then start a new Claude Code session:
 
-    /plugin marketplace add ./dev/claude-plugins
-    /plugin install clojure-lsp@spectre-workshop
-    /reload-plugins
+    claude plugin marketplace add ./dev/claude-plugins
+    claude plugin install clojure-lsp@spectre-workshop
 
-Needs `clojure-lsp` on PATH (`gmake deps` shows it).
+That is the route that was run. It registers the marketplace in your user
+settings by this checkout's absolute path, and enables the plugin for every
+project. Needs `clojure-lsp` on PATH (`gmake deps` shows it).
 
-## Status
+What did not work on the way:
 
-Installed and run on 2026-09-30, on `src/spectre/core.clj`:
-
-- document symbols: the namespace and its 12 definitions, private ones
-  marked;
-- references to `master-key`: 10 across `core.clj` and `cli.clj`;
-- diagnostics arrive unasked after the first call, from both clj-kondo and
-  clojure-lsp.
-
-What it took to get there:
-
-- A session only sees a marketplace added from inside it. One added with
-  `claude plugin marketplace add` from a shell is not found by `/plugin
-  install` in a session already running; `claude plugin install` from the
-  same shell works.
+- `/plugin install` in a session that was already running did not find a
+  marketplace added from a shell a minute earlier.
 - `/reload-plugins` did not start the server. Restarting the session did.
 
-Not working, or not known:
+`/plugin marketplace add` typed inside a session was never tried.
 
-- hover on a Java interop call (`Mac/getInstance`) comes back empty;
-- whether it and an Emacs lsp-mode session contend over `.lsp/.cache`.
+## What it answers
 
-Without it, the same questions are answered from the shell:
+Run on 2026-09-30 against this repo. Lines and characters are 1-based.
+
+- **Symbols**: `core.clj` gives the namespace and its 12 definitions, the
+  private ones marked.
+- **References and callers**: 10 references to `master-key` across two files.
+  Incoming calls to `spectre.db/load-db` name `seed!`, `tui2/init`,
+  `tui/loop!` and the tests. Outgoing calls from `spectre.cli/generate` are
+  the whole flow of the `pw` command. The maps under *Working it here* in
+  `exercises.org` were drawn from these.
+- **Documentation for a library call**: hover on `fs/which` returns its
+  arguments and docstring, read from `babashka/fs` in `~/.m2`; go to
+  definition lands on the line inside that jar. No REPL has to be running
+  and no namespace has to be loaded, which the REPL route needs.
+- **Java interop**: hover on `Mac/getInstance` returns the Javadoc, from the
+  JDK sources clojure-lsp keeps under `~/.cache/clojure-lsp/jdk`.
+- **Diagnostics** arrive unasked after an edit, from clj-kondo and from
+  clojure-lsp. The copy of clj-kondo inside clojure-lsp is newer than the
+  2024 one on PATH here, and reports things `clj-kondo --lint` does not.
+
+## Not known
+
+- The first hover on `Mac/getInstance`, within a minute of the server
+  starting, came back empty. The same position answered a few minutes later.
+  Probably the server was still analysing; that was not established.
+- Whether it and an Emacs lsp-mode session contend over `.lsp/.cache`.
+
+Without the plugin, the shell answers the reference and diagnostic questions:
 `clojure-lsp references --from spectre.core/master-key` and
 `clojure-lsp diagnostics`.

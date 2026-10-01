@@ -107,9 +107,10 @@ Type or paste these into the ~(comment ...)~ at the bottom of ~core.clj~ and eva
 (scope :password)   ;; => "com.lyndir.masterpassword"
 
 ;; the salt master-key builds: scope, the name's length as four bytes, the name
+(count (scope :password))   ;; => 25
 (let [n (utf8 "John Doe")]
-  (String. (cat-bytes (utf8 (scope :password)) (u32 (alength n)) n) "ISO-8859-1"))
-;; => "com.lyndir.masterpassword   \bJohn Doe"     the \b is the length, 8
+  (drop 25 (cat-bytes (utf8 (scope :password)) (u32 (alength n)) n)))
+;; => (0 0 0 8 74 111 104 110 32 68 111 101)     the length, 8, then "John Doe"
 
 ;; the slow step, about 0.2s here. def it once and reuse it below
 (def mkey (master-key "John Doe" "correct horse battery staple"))
@@ -192,6 +193,8 @@ gmake session-stop
 
 ~gmake session FILE=src/spectre/db.clj~ starts on another file. In a worktree the session is named ~spectre-<directory>~, so each checkout has its own.
 
+~gmake demo~ is the same thing in a graphical frame: your init file, jacked in, ~core.clj~ loaded. There is no tmux pane for ~session-shot~ to read, but the REPL is reached the same way, and where the init file starts the Emacs server, ~emacsclient -e~ asks the running editor itself: which modes are on, what a key is bound to, what is in ~*Messages*~. ~gmake status~ says whether ~.nrepl-port~ points at a live REPL, and whether that REPL is this checkout's.
+
 The REPL is reachable without Emacs, through the ~.nrepl-port~ file babashka writes in the checkout. [[https://github.com/licht1stein/brepl][brepl]] reads that file:
 
 #+begin_src sh :eval no
@@ -201,7 +204,7 @@ brepl -e '(in-ns (quote spectre.core)) (seq (u32 258))'   # => (0 0 1 2)
 
 So there are three ways in, and they see the same state: keys sent to the tmux session (~tmux send-keys -t spectre ...~), forms sent to the nREPL port, and you. A ~def~ made through one is visible to the others.
 
-There is no Clojure language-server plugin in the Claude Code plugin directory at the time of writing. The ~clojure-lsp~ binary covers the same ground from the shell: ~clojure-lsp diagnostics~, ~clojure-lsp references --from spectre.core/derive~, and ~clojure-lsp dump~ for the whole analysis.
+For the questions that reading answers, there is ~clojure-lsp~. From the shell: ~clojure-lsp diagnostics~, ~clojure-lsp references --from spectre.core/derive~, and ~clojure-lsp dump~ for the whole analysis. Claude Code's plugin directory has no Clojure language server, so [[file:dev/claude-plugins/plugins/clojure-lsp/README.md][dev/claude-plugins]] holds a local plugin that puts the same binary behind its LSP tool: symbols, references, call hierarchy, and hover, which resolves the docstring of ~fs/which~ from the library's jar and the Javadoc of ~Mac/getInstance~ from the JDK sources, with no REPL running.
 
 * After core
 
@@ -210,7 +213,10 @@ Follow the same pattern for each exercise file: ~gmake namespaces NS=<namespace>
 For the library calls the TODOs name, look in [[file:src/tour.clj][tour.clj]] first, then ask the REPL:
 
 #+begin_src clojure :eval no
-(require '[babashka.fs :as fs] '[clojure.repl :refer [doc dir]])
+(require '[babashka.fs :as fs] '[clojure.repl :refer [doc dir source]])
 (dir babashka.fs)     ;; every public name in the namespace
 (doc fs/which)        ;; arguments and docstring
+(source fs/which)     ;; the definition, though it is compiled into babashka
 #+end_src
+
+From a source buffer the same lookup is ~C-c C-d d~ with point on the symbol, once the file is loaded: an alias such as ~fs/~ resolves through the buffer's namespace, and a namespace that has not been loaded has none. [[file:exercises.org][exercises.org]] has the rest under /How these are worked here/: what babashka's nREPL answers and what it does not, the JVM REPL for the difference, and for each exercise what it loads and who calls its stubs.

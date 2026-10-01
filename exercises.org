@@ -37,6 +37,64 @@ bb test --vars spectre.cli-test/spec-test
 
 You can also select by test metadata with ~--includes~ / ~--excludes~, e.g. ~bb test --excludes :clipboard~ to skip the real-clipboard test in E2.
 
+* How these are worked here
+
+This section, and the /Working it here/ under each exercise, are local to this checkout. The exercise text is the workshop's.
+
+The order, for every exercise: map it, load it, read the docs for the calls it names, try them from the file's ~(comment ...)~ block, and only then fill the stub and run its tests.
+
+| step                                | with                                                                                                 |
+|-------------------------------------+------------------------------------------------------------------------------------------------------|
+| what loading the namespace pulls in | ~gmake namespaces NS=spectre.db~                                                                     |
+| the stubs, each with its form       | ~gmake todos E=e3~ (~SRC=1~ leaves the tests out)                                                    |
+| who calls a stub                    | the map under each exercise; ~clojure-lsp references --from spectre.db/load-db~ redraws it           |
+| load the file                       | ~C-c C-k~. A stub file loads: its functions exist and return ~nil~                                   |
+| evaluate one form                   | ~C-x C-e~ after it, or ~C-c C-c~ inside it. In a ~comment~ block that is the one form, not the block |
+| the exercise's tests                | ~gmake e3~, or ~M-x spectre-test-ns~ from the source buffer or its test                              |
+
+** Documentation for a call
+
+The TODOs name library calls: ~fs/which~, ~p/shell~, ~edn/read-string~. What follows was checked against babashka's own nREPL, the one ~gmake demo~, ~gmake session~ and ~M-x spectre-jack-in~ start.
+
+Load the file first. ~fs/which~ is an alias, resolved through the namespace of the buffer you are in. Until ~C-c C-k~ has created that namespace in the REPL, ~C-c C-d d~ on it finds nothing. A full name, ~babashka.fs/which~, resolves at any time.
+
+| want                                     | do                                                        |
+|------------------------------------------+-----------------------------------------------------------|
+| docstring and arguments                  | ~C-c C-d d~ with point on the symbol                      |
+| arguments while typing                   | nothing: eldoc puts them in the echo area                 |
+| the names in a library                   | complete after ~fs/~, or ~(clojure.repl/dir babashka.fs)~ |
+| find a name                              | ~(clojure.repl/apropos "which")~                          |
+| the source                               | ~(clojure.repl/source fs/which)~                          |
+| the call in use                          | [[file:src/tour.clj][src/tour.clj]]: evaluate its examples in place              |
+| a ~clojure.core~ function on ClojureDocs | ~C-c C-d w~, in the browser                               |
+
+~doc~, ~dir~ and ~source~ print: the text lands in the REPL buffer and the value is ~nil~. The ~comment~ blocks of [[file:src/spectre/clipboard.clj][clipboard.clj]] and [[file:src/spectre/db.clj][db.clj]] open with these lookups for the calls their TODOs name.
+
+A process started with ~p/shell~ inherits the REPL server's standard output, so what it prints shows up in the ~*nrepl-server ...*~ buffer and not at point. ~p/sh~, or ~{:out :string}~, hands it back as a value.
+
+Babashka's nREPL has no cider-nrepl, so these do not work on it: ~C-c C-d a~ and ~C-c C-d s~ (apropos), ~C-c C-d c~ (ClojureDocs in a buffer), ~C-c RET~ (macroexpand). ~M-.~ cannot open a ~babashka.*~ function either: that REPL names a file which is not on disk, and gives no line number for anything.
+
+The JVM REPL has all of it. ~M-x spectre-nrepl-jvm~, or ~gmake nrepl-jvm~ and then ~M-x spectre-connect~, serves the same code from JVM Clojure with cider-nrepl: there ~fs/which~ points at line 1706 of ~fs.cljc~ inside the library's jar. It needs the ~clojure~ CLI, takes the fixed port, and writes ~.nrepl-port~, so do not start it in a checkout whose jacked-in REPL you still want ~brepl~ to find.
+
+** Tests without leaving the REPL
+
+- ~M-x spectre-test-ns~ runs ~bb test --nses~ for the buffer's namespace in a compilation buffer.
+- Inside the REPL: load the test file with ~C-c C-k~, then evaluate ~(clojure.test/run-tests 'spectre.db-test)~. [[file:test/spectre/db_test.clj][db_test.clj]] ends with that form in a ~comment~ block. Reload a source file after changing it, or the tests run the old definitions.
+- CIDER's own runner, ~C-c C-t n~, sends requests babashka answers. That was checked from outside Emacs; the key was not pressed.
+
+Where each target stands with nothing implemented (2026-09-30):
+
+| target       | tests | assertions |        failing |
+|--------------+-------+------------+----------------|
+| ~gmake e1~   |     1 |          1 |              0 |
+| ~gmake e2~   |     2 |          3 |              2 |
+| ~gmake e3~   |     4 |         10 |              8 |
+| ~gmake e4~   |     2 |          8 | 3, and 1 error |
+| ~gmake e5~   |     4 |         24 |             10 |
+| ~gmake test~ |    20 |         86 |   27, 2 errors |
+
+Some assertions pass on a stub, because ~nil~ is what they expect. [[file:.meta/conj-26-review.md][.meta/conj-26-review.md]] is what the finished CLI and TUI do, run from the workshop's solutions branch: the behaviour to check an implementation against, without the code.
+
 * TODO E1
 DEADLINE: <2026-10-01 Thu>
 
@@ -59,6 +117,13 @@ Run just this namespace while you work:
 #+begin_src sh
 bb test --nses spectre.core-test
 #+end_src
+
+** Working it here
+
+- [[file:walkthrough.org][walkthrough.org]] is the map for this one: what ~core.clj~ loads, the order to read it in, the flow from name to password, and under /What each input changes/ the five checks above as REPL forms with the values they return.
+- The ~comment~ block of ~core.clj~ already holds explorations: ~master-key~ and ~derive~ taken apart, then ~password~ across three templates. They are assertions that have not been written down as ~is~ yet.
+- ~master-key~ is the slow step, about 0.15 s a call here, and ~password~ pays it on every call. ~derive~ on a key made once does not.
+- ~gmake e1~ passes before you start, on the one test given. This exercise only adds tests.
 
 * TODO E2
 DEADLINE: <2026-10-01 Thu>
@@ -83,6 +148,39 @@ There is a third test, ~real-clipboard-test~, tagged ~^:clipboard~, that exercis
 SPECTRE_CLIPBOARD_TEST=1 bb test --nses spectre.clipboard-test
 #+end_src
 
+** Working it here
+
+#+begin_src sh
+gmake namespaces NS=spectre.clipboard
+gmake todos E=e2
+#+end_src
+
+Two libraries and nothing of ours: ~babashka.fs~ and ~babashka.process~. Who reaches the stubs:
+
+#+begin_example
+bb pw <site>               spectre.cli/generate
+  --print, or no terminal    println: the clipboard is not involved
+  otherwise                  (clipboard/copy! password)
+                               one argument, so cmd is (tool)
+                               nil back: "No clipboard tool found, printing instead."
+
+copy-test, no-tool-test    copy! with the command passed in: a fake one, then nil
+real-clipboard-test        (tool), and copy! with one argument; only with SPECTRE_CLIPBOARD_TEST
+#+end_example
+
+[[file:src/spectre/cli.clj::(defn generate][generate]] is the only caller outside the tests.
+
+| call              | for     | an example to evaluate                     |
+|-------------------+---------+--------------------------------------------|
+| ~fs/which~        | ~tool~  | [[file:src/tour.clj::fs/which "git"][tour.clj, the fs section]]                   |
+| ~p/shell~, ~p/sh~ | ~copy!~ | [[file:src/tour.clj::shell inherits stdout and stderr][tour.clj, the process section]]              |
+| ~:in~             | ~copy!~ | [[file:src/tour.clj::in supplies stdin][tour.clj, the same section, with p/process]] |
+
+- Load ~clipboard.clj~, then ~C-c C-d d~ on each call, or evaluate the lookups that open its ~comment~ block. The forms under them show what each call gives back.
+- ~gmake e2~ starts at 2 failing, both in ~copy-test~. ~no-tool-test~ passes on the stub.
+- Nothing in ~gmake e2~ touches your clipboard. ~gmake e2-clipboard~ does: it copies a test value and puts back what was there. So does ~(copy! "foo")~ at the end of the ~comment~ block once ~copy!~ works, and that one puts nothing back.
+- ~bb pw a.example.com --print~ already prints a password and never reaches ~copy!~. To see the clipboard path from the CLI you need a real terminal and no ~--print~.
+
 * TODO E3
 DEADLINE: <2026-10-01 Thu>
 
@@ -105,6 +203,47 @@ bb test --nses spectre.db-test
 - ~site-settings~: look up one site's settings map in ~db~, or ~nil~ when it is not there yet.
 - ~merge-site!~: merge ~settings~ into the existing entry for ~site~ (so a partial update, e.g. just a new ~:counter~, does not wipe the other keys), save the result with ~save-db!~, and return the updated db.
 
+** Working it here
+
+#+begin_src sh
+gmake namespaces NS=spectre.db
+gmake todos E=e3
+#+end_src
+
+Three libraries: ~babashka.fs~, ~clojure.edn~, ~clojure.pprint~. Everything else that stores anything goes through these four functions:
+
+#+begin_example
+default-path     SPECTRE_DB, else ~/.config/spectre/db.edn. Read once, when the namespace loads.
+                 Here .envrc sets SPECTRE_DB to this checkout's db.edn.
+
+load-db          spectre.seed/seed!          bb db:seed
+                 spectre.tui2/init           bb tui2, at start
+                 spectre.tui/loop!           bb tui
+                 after E4: spectre.cli/known-sites and site-opts
+save-db!         spectre.seed/seed!
+                 merge-site!, once you write it
+site-settings    spectre.tui2/entry          one row of the list
+                 spectre.tui/search-lines, search-key
+merge-site!      spectre.tui2/update-edit    Enter on the edit screen
+                 spectre.tui/edit-key
+                 after E4: spectre.cli/site-opts
+#+end_example
+
+| call              | for                       | an example to evaluate                            |
+|-------------------+---------------------------+---------------------------------------------------|
+| ~fs/exists?~      | ~load-db~                 | [[file:src/tour.clj::fs/exists? "bb.edn"][tour.clj, the fs section]]                          |
+| ~edn/read-string~ | ~load-db~                 | none in tour.clj: the ~comment~ block of ~db.clj~ |
+| ~fs/parent~       | ~save-db!~                | [[file:src/tour.clj::fs/parent "src/spectre/cli.clj"][tour.clj, the fs section]]                          |
+| ~fs/create-dirs~  | ~save-db!~                | [[file:src/tour.clj::create-dirs creates missing parent directories][tour.clj, the same]]                                |
+| ~pp/pprint~       | the namespace requires it | none in tour.clj: ~C-c C-d d~                     |
+
+- Load ~db.clj~, then ~C-c C-d d~ on each call, or evaluate the lookups that open its ~comment~ block. The forms under them show what each call gives back, on throwaway paths.
+- The tests lean on each other the way the functions do: ~save-db-test~ reads back with ~load-db~, and ~merge-site-test~ checks through ~site-settings~ and ~load-db~. Top to bottom is the order that turns them green one at a time.
+- Every test passes ~:path~ into a temporary directory. None of them reads or writes ~db.edn~.
+- ~gmake e3~ starts at 8 failing of 10 assertions.
+- What else moves when E3 is done: ~seed-test~ inside ~gmake test~; ~bb db:seed~, which until then exits 0 and writes nothing; and the list in ~bb tui2~, which stays empty until ~load-db~ returns something. E4 and E5 both need E3.
+- ~default-path~ is a ~def~. Evaluate it to see where this REPL's database is; changing ~SPECTRE_DB~ afterwards changes nothing until the namespace is reloaded.
+
 * TODO E4
 DEADLINE: <2026-10-01 Thu>
 
@@ -124,6 +263,30 @@ bb test --nses spectre.cli-test
   Change it to read ~db.edn~ (~db/load-db~ with the given ~opts~, which carries ~:path~ in tests), prefer that stored setting over ~defaults~, then let an explicit flag win over that.
   When the effective settings differ from what is stored (a new site, or a flag that overrides a stored value), warn on stderr and save with ~db/merge-site!~.
 - Reject unknown templates in the CLI parser. Use ~:coerce :keyword~ and ~:validate~ with the set of keys from ~spectre.core/templates~. See ~spec-test~.
+
+** Working it here
+
+#+begin_src sh
+gmake namespaces NS=spectre.cli
+gmake todos E=e4
+#+end_src
+
+Seven namespaces load, ~cli~ last: this is where ~clipboard~, ~core~, ~db~, ~identicon~ and ~term~ meet. One library, ~babashka.cli~. The whole command is one function:
+
+#+begin_example
+bb pw <site> [flags]     bb.edn sends it to spectre.cli/generate; babashka.cli parses the flags against `spec`
+  explicit    the :counter :template :variant flags that were given
+  effective   (site-opts site explicit)      <- the stub: defaults, then db.edn, then flags; warn and save
+  full-name   --name, else SPECTRE_NAME, else a prompt
+  master      SPECTRE_MASTER, else a prompt that draws the identicon as you type
+  password    (derive (master-key full-name master variant) site effective)
+  output      println with --print or without a terminal, else clipboard/copy!  (E2)
+#+end_example
+
+- ~babashka.cli~ is the [[file:src/tour.clj::;;;; babashka.cli][third section of tour.clj]]: ~parse-opts~ with a ~spec~, ~:coerce~, ~:alias~, ~dispatch~. Load ~cli.clj~, then ~C-c C-d d~ on ~cli/dispatch~.
+- ~site-opts-test~ goes through ~db/load-db~ and ~db/site-settings~, so it cannot pass before E3.
+- ~gmake e4~ starts at 3 failing and 1 error, of 8 assertions.
+- From a shell, with the identity ~.env~ supplies: ~bb pw a.example.com --print~. It works before this exercise, on defaults only, and stores nothing. The messages the finished version prints for a new site, a stored one, and a flag that disagrees are in [[file:.meta/conj-26-review.md][.meta/conj-26-review.md]].
 
 * TODO E5
 DEADLINE: <2026-10-01 Thu>
@@ -199,6 +362,21 @@ Notes:
 - E3 gives you ~spectre.db/load-db~. Before E3 is done, the TUI shows
   "no sites in db.edn yet" and the list is empty.
 
+** Working it here
+
+#+begin_src sh
+gmake namespaces NS=spectre.tui2
+gmake todos E=e5 SRC=1
+#+end_src
+
+- Five namespaces load, ~spectre.db~ among them: ~init~ calls ~db/load-db~, each row of the list calls ~db/site-settings~, and Enter on the edit screen calls ~db/merge-site!~. That is why E3 comes first.
+- The tests never start a terminal. [[file:test/spectre/tui2_test.clj][tui2_test.clj]] builds a state from an in-memory db and feeds it messages through ~update-fn~: its ~press~ helper for a key, ~msg/window-size~ for a resize. ~state~, ~update-fn~ and ~view~ are public, so the same works at the REPL. ~matches~ and ~cycle-value~ are public and take plain values: call them directly.
+- charm.clj is a dependency in a jar, not part of babashka. After loading ~tui2.clj~, ~C-c C-d d~ on ~item-list/selected-item~ gives its arguments, and the REPL knows which file in the jar it is in.
+- ~gmake e5-tui~ runs the TUI with its nREPL on this checkout's ~NREPL_PORT~, which is 1667 only in the main checkout, and ~M-x spectre-connect~ attaches CIDER to it. In a worktree, a bare ~bb tui2 --nrepl~ would take 1667 from the main checkout.
+- That nREPL is a second REPL, beside the jacked-in one. A form evaluated in the wrong one changes nothing on screen. It writes no ~.nrepl-port~, so from a shell it is ~brepl -p <port>~.
+- ~gmake e5~ starts at 10 failing of 24 assertions. ~gmake e5-optional~ adds ~figure-test~.
+- What the finished TUI does at the edges, such as wraparound, the counter's floor and what a filter keeps, is in [[file:.meta/conj-26-review.md][.meta/conj-26-review.md]]. Driving a TUI through tmux has traps of its own: [[file:.meta/findings.md][.meta/findings.md]], under /Observing a TUI through tmux/.
+
 * TODO E6
 DEADLINE: <2026-10-01 Thu>
 
@@ -248,6 +426,13 @@ Run the CLI from another directory using each of these methods.
   #+end_src
 
   Test with ~pw --help~ and ~pw example.com~ from another directory.
+
+** Working it here
+
+- ~.envrc~ points bbin at this checkout: ~BABASHKA_BBIN_BIN_DIR~ is ~.bin~ here, ignored by git and first on ~PATH~ while you are inside the checkout. ~bbin install .~ puts the launcher there and leaves your own bin directory alone.
+- So the bbin launcher is on ~PATH~ only inside the checkout: direnv takes ~.bin~ off again when you leave. "From another directory" then means the manual launcher, or ~.bin/pw~ by its full path. This follows from how direnv works; E6 has not been done here to confirm it.
+- ~gmake e6~ checks that a ~pw~ is on ~PATH~ and runs ~pw --help~ from ~/~. It keeps the ~PATH~ it started with, so it passes where a shell that really left the checkout would not find the bbin launcher.
+- This exercise edits ~bb.edn~ and adds ~deps.edn~. The rule in ~AGENTS.md~ about leaving ~bb.edn~ alone is about where dev tooling goes, not about this.
 
 * TODO Optional open-ended exercises
 DEADLINE: <2026-10-03 Sat>

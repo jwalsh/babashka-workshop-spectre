@@ -17,9 +17,13 @@ tooling for working through it.
 - **`gmake`, not `make`.** `gmake help` lists the targets.
 - **Leave `bb.edn` alone.** Dev tooling lives in `dev/`, off the project's
   `:paths`, and uses only what babashka bundles. Run it with `bb -cp dev -m
-  workshop.<name>` or through its `gmake` target.
+  workshop.<name>` or through its `gmake` target. E6 is the one exception:
+  the exercise itself adds a `:bbin/bin` entry.
 - **The exercise stubs are the user's to fill in.** Do not complete a TODO in
-  `src/` or `test/` unless asked to. `gmake todos` lists them.
+  `src/` or `test/` unless asked to. `gmake todos` lists them. Exploration
+  forms in a file's `(comment ...)` block are a different thing, and welcome
+  when asked for: doc lookups and library calls on throwaway inputs, values
+  left for the user to evaluate, never the body of a stub.
 - **No allocation state in the repo, ignored or not.** Ports, pids, locks and
   logs that the tooling records belong under `${XDG_STATE_HOME:-~/.local/state}`,
   keyed by checkout path. Today nothing is recorded: the fixed port is
@@ -28,7 +32,9 @@ tooling for working through it.
   it writes it on start, removes it on exit, and `brepl` and CIDER look for
   it there. Do not add siblings to it.
 - Conventional commits, co-author as a `--trailer`. Run `gmake elisp` and
-  `clj-kondo --lint dev` before committing changes to the tooling.
+  `clj-kondo --lint dev` before committing changes to the tooling, and
+  `gmake docs` before committing changes to a document or to anything a
+  document names.
 
 ## Evaluate, do not guess
 
@@ -36,7 +42,9 @@ A claim about what the code does should come from running it.
 
 - `gmake session` starts Emacs in a detached tmux session, jacked in to a
   babashka nREPL with `src/spectre/core.clj` loaded. `gmake session-shot`
-  prints its screen; `gmake session-stop` ends it.
+  prints its screen; `gmake session-stop` ends it. `gmake demo` is the same
+  in a graphical frame, which is what the user usually sits in front of:
+  there is no pane to print, so ask the editor itself (below).
 - `brepl -e '(form)'` evaluates in that same REPL through `.nrepl-port`.
   State is shared with whoever is attached to the session.
 - Without a session, `bb -e "(require 'spectre.core) ..."` is enough for a
@@ -44,14 +52,29 @@ A claim about what the code does should come from running it.
 - `clojure-lsp diagnostics`, `clojure-lsp references --from ns/var` for
   static questions from the shell. With the local plugin installed
   (`dev/claude-plugins/`, see its README) the LSP tool answers the same
-  for `.clj`: symbols, references, definitions. It also pushes clj-kondo and
-  clojure-lsp diagnostics into your context unasked; the unfilled stubs
-  account for nearly all of them.
+  for `.clj`: symbols, references, callers, definitions. It also pushes
+  clj-kondo and clojure-lsp diagnostics into your context unasked; the
+  unfilled stubs account for nearly all of them.
+- Documentation for a library call: the LSP tool's hover gives the docstring
+  of `fs/which` from the library's jar, and the Javadoc for interop, with no
+  REPL. From the shell, `bb -e "(clojure.repl/doc babashka.fs/which)"`. In
+  the user's REPL an alias such as `fs/` resolves only once the namespace
+  that declares it has been loaded; a full name resolves at any time.
+- `emacsclient -e '(form)'` asks the running Emacs, when its init file
+  starts the server: which modes are on in a buffer, what a key is bound to,
+  the tail of `*Messages*`, the `*nrepl-messages ...*` log of what was
+  evaluated. Read with it. Do not open a menu or a prompt in the user's
+  editor from it: it stays open on their screen after your call returns.
+- In a worktree, run through `direnv exec .`. Your shell keeps the
+  environment of the checkout Claude Code was started in, wherever you `cd`:
+  `SPECTRE_DB` and `NREPL_PORT` are the main checkout's. `gmake status`
+  reports the port; nothing reports the database.
 - `gmake tags` writes `./.tags` (Universal Ctags): one line per `defn`,
   `defn-`, `def`, `deftest` and `ns`, with file and line. `awk -F'\t'
   '$1=="derive"' .tags` finds a definition. `gmake TAGS` is the Emacs table:
-  a real file target, rebuilt only when a source file is newer than it. GitNexus does not parse Clojure
-  (its index of this repo holds files only), so do not use it here.
+  a real file target, rebuilt only when a source file is newer than it.
+  GitNexus does not parse Clojure (its index of this repo holds files only),
+  so do not use it here.
 
 A SessionStart hook (`.claude/settings.json`) runs `dev/session-status.bb`
 and puts the result in your context: whether `.nrepl-port` points at a live
@@ -65,9 +88,15 @@ PATH from `~/.local/bin`), runs before and after every Write and Edit and
 balances the delimiters of a Clojure file. What lands on disk can therefore
 differ from what you wrote: if a form mattered, read it back. It runs with
 `--cljfmt`, which reformats the file after each edit: the workshop's sources
-already conform (`cljfmt check src test dev` is clean), so an edit changes
-only what it changed. It runs without `--log-level`, which would write a log
+conform as shipped, so an edit changes what it changed, and tidies any
+whitespace a hand edit left in that file (`cljfmt check src test dev` shows
+what it would touch). It runs without `--log-level`, which would write a log
 file into the checkout.
+
+Before editing a file under `src/` or `test/`, ask the running Emacs whether
+it is open there with unsaved edits (`buffer-modified-p` through
+`emacsclient -e`). If it is, your write to disk becomes a conflict prompt on
+the user's next save: leave the file alone and say so.
 
 ## Surfaces
 
@@ -79,11 +108,14 @@ a question the files cannot, and each has a way to go wrong.
 | files | what is written | read, grep | the stub compiles and returns `nil` |
 | symbol index | where a name is defined | `.tags`, `TAGS` | `.tags` not regenerated; `TAGS` only rebuilds on a newer source |
 | namespace graph | what loads what, in order | `gmake namespaces` | needs `clj-kondo` |
-| static analysis | references, diagnostics | `clojure-lsp references`, `diagnostics` | macros and dynamic calls it cannot see |
-| live REPL | what the code does | `brepl -e`, `.nrepl-port` | stale port, or a REPL from another checkout |
-| editor screen | what the owner is looking at | `gmake session-shot` | no session running |
-| session status | whether the two above can be trusted | SessionStart hook, `gmake status` | read once at start, then things change: rerun it |
+| static analysis | references, callers, diagnostics | the LSP tool; `clojure-lsp references`, `diagnostics` | macros and dynamic calls it cannot see |
+| library docs | what a call takes and returns | LSP hover; `clojure.repl/doc` | an alias in a namespace the REPL has not loaded; a hover in the first minute of an LSP server, which can come back empty |
+| live REPL | what the code does | `brepl -e`, `.nrepl-port` | stale port, or a REPL from another checkout; a second REPL (`bb tui2 --nrepl`) that writes no port file |
+| editor screen | what the user is looking at | `gmake session-shot` | no tmux session (`gmake demo` has none); a selection drawn in inverse video does not show |
+| running editor | modes, key bindings, `*Messages*`, the nREPL message log | `emacsclient -e` | no server in that Emacs; a menu or prompt you open stays open |
+| session status | whether the REPL and the screen can be trusted | SessionStart hook, `gmake status` | read once at start, then things change: rerun it |
 | exercise state | what is left and when it is due | `gmake todos`, `gmake agenda` | TODO markers removed without the test passing |
+| the documents | whether they still match the code | `gmake docs` | it checks targets, commands, links and the walkthrough's results, not prose |
 
 Prefer the surface that answers by execution over the one that answers by
 reading, and say which one a claim came from.
@@ -98,9 +130,14 @@ reading, and say which one a claim came from.
 | exercise deadlines | `gmake agenda` |
 | one exercise's tests | `gmake e1` … `gmake e5` |
 | all required tests | `gmake test` |
+| every target | `gmake help`; `README.org` has the same list with more words |
+| do the documents still match | `gmake docs` |
 
-`exercises.org` is the exercise text; `walkthrough.org` is the reading order
-for `core.clj` and what loads what.
+`exercises.org` is the exercise text, and under *Working it here* for each
+exercise: what it loads, who calls its stubs, where the docs for the calls it
+names are, and what its tests report before anything is written.
+`walkthrough.org` is the reading order for `core.clj` and what loads what.
+`.meta/conj-26-review.md` is what the finished CLI and TUI do.
 `.meta/README.md` is where things stand: what is open and what was never
 verified. Read it when starting cold.
 
@@ -112,6 +149,8 @@ there; one place is enough.
 ## Worktrees
 
 Exercises are worked in branches under `worktrees/` (ignored via
-`.git/info/exclude`); `main` stays the base. Each checkout derives its own
-`SPECTRE_DB`, `NREPL_PORT` and bbin directory in `.envrc`, and needs its own
-`gmake .env` and `direnv allow`. The tmux session name is per checkout.
+`.git/info/exclude`, which is this clone's and not in the repo); `main` stays
+the base. Each checkout derives its own `SPECTRE_DB`, `NREPL_PORT` and bbin
+directory in `.envrc`, and needs its own `gmake .env` and `direnv allow`. The
+tmux session name is per checkout. Tooling and documents change on `main`;
+an exercise branch is fast-forwarded to it and holds only that exercise.

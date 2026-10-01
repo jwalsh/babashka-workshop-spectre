@@ -44,6 +44,86 @@ In Emacs, open [[file:exercises.org][exercises.org]] and run the command blocks 
 
 Before E1, [[file:walkthrough.org][walkthrough.org]] is a path through ~core.clj~ at the REPL: what loads what, the order to read it in, and forms to evaluate from its ~comment~ block.
 
+* Working in this checkout
+
+Everything from here to the license is local to this fork: tooling for working through the workshop, not part of it. The workshop's code is ~src/~ and ~test/~, and ~bb.edn~ is untouched.
+
+** The method
+
+REPL first. Read a namespace, load it, read the docs for the calls it uses, and try them from the file's ~(comment ...)~ block. The test, or the stub, comes after that, and says what the exploration already showed.
+
+So the tooling is about seeing: what a namespace loads, who calls a stub, what a library call returns, what the editor and the REPL are doing right now. [[file:exercises.org][exercises.org]] carries that for each exercise under /Working it here/, and how to look up documentation for the ~babashka.fs~ and ~babashka.process~ calls the stubs name.
+
+| read                    | for                                                                  |
+|-------------------------+----------------------------------------------------------------------|
+| [[file:exercises.org][exercises.org]]           | the exercises, with a map and the doc lookups for each               |
+| [[file:walkthrough.org][walkthrough.org]]         | ~core.clj~ taken apart at the REPL, every result checked             |
+| [[file:AGENTS.md][AGENTS.md]]               | the rules, and the surfaces an agent can read besides files          |
+| [[file:.meta/README.md][.meta/README.md]]         | where things stand, what is open, what was never verified            |
+| [[file:.meta/findings.md][.meta/findings.md]]       | what bit, and the fix                                                |
+| [[file:.meta/conj-26-review.md][.meta/conj-26-review.md]] | what the finished CLI and TUI do, to check an implementation against |
+
+** Start
+
+#+begin_src sh :eval no
+gmake deps          # what the workshop needs, and what is installed
+gmake .env          # the throwaway identity the tests use; never overwrites
+direnv allow        # this checkout's own db.edn, nREPL port and bbin directory
+gmake demo          # Emacs in a frame, jacked in to babashka, core.clj loaded
+gmake status        # is the REPL live, and is it this checkout's
+#+end_src
+
+~gmake session~ is ~gmake demo~ inside a detached tmux session, which an agent can read with ~gmake session-shot~. Either way ~brepl -e '(form)'~ evaluates in the same REPL from a shell.
+
+** Targets
+
+~gmake help~ prints this list. ~gmake~, not ~make~.
+
+| target               | does                                                                                            |
+|----------------------+-------------------------------------------------------------------------------------------------|
+| ~gmake help~         | the targets                                                                                     |
+| ~gmake .env~         | create ~.env~ from ~.env.template~; warns and leaves an existing one alone                      |
+| ~gmake deps~         | the workshop's dependencies and what is installed                                               |
+| ~gmake deps-emacs~   | exercise the Emacs packages in batch: installed and working, not what your session switched on  |
+| ~gmake todos~        | the TODO stubs with their forms; ~E=e3~ for one exercise, ~SRC=1~ without the tests             |
+| ~gmake namespaces~   | namespaces in load order with what each requires; ~NS=spectre.cli~ for one and what it loads    |
+| ~gmake agenda~       | the exercise headings with their deadlines; ~ALL=1~ includes the done ones                      |
+| ~gmake tags~         | symbol index in ~.tags~: every ~defn~, ~defn-~, ~def~, ~deftest~ and ~ns~ with its line         |
+| ~gmake TAGS~         | the Emacs tags table, rebuilt when a source file is newer                                       |
+| ~gmake status~       | is ~.nrepl-port~ live and this checkout's, is the tmux session up                               |
+| ~gmake demo~         | graphical Emacs, jacked in, ~FILE~ loaded; ~EMACS=~ picks another build                         |
+| ~gmake session~      | the same in a detached tmux session                                                             |
+| ~gmake session-shot~ | what that session's screen shows, as text                                                       |
+| ~gmake session-stop~ | stop it and its REPL                                                                            |
+| ~gmake nrepl~        | babashka nREPL on this checkout's fixed port                                                    |
+| ~gmake nrepl-jvm~    | the same code on JVM Clojure with cider-nrepl: apropos, jump to library source, debugger        |
+| ~gmake nrepl-stop~   | stop whichever of the two is on the fixed port                                                  |
+| ~gmake test~         | every required exercise's tests                                                                 |
+| ~gmake e1~           | E1: the ~spectre.core~ tests                                                                    |
+| ~gmake e2~           | E2: the clipboard, with a fake clipboard command only                                           |
+| ~gmake e2-clipboard~ | E2 including the test that writes your real clipboard, and restores it                          |
+| ~gmake e3~           | E3: ~db.edn~ load, save and merge                                                               |
+| ~gmake e4~           | E4: the ~pw~ CLI                                                                                |
+| ~gmake e5~           | E5: the charm.clj TUI, required TODOs                                                           |
+| ~gmake e5-optional~  | E5 including the optional ~figure-test~                                                         |
+| ~gmake e5-tui~       | the TUI with an nREPL inside it, for changing it while it runs; needs a real terminal           |
+| ~gmake e6~           | is a ~pw~ launcher on ~PATH~, and does it run from ~/~                                          |
+| ~gmake seed~         | add example sites to ~db.edn~; writes nothing before E3                                         |
+| ~gmake elisp~        | byte-compile, checkdoc and ERT for the Emacs wiring                                             |
+| ~gmake docs~         | check these documents against the code: targets, commands, links, and the walkthrough's results |
+
+** Emacs
+
+[[file:babashka-workshop-spectre.el][babashka-workshop-spectre.el]] is the wiring, and its commentary lists the commands. ~gmake demo~ and ~gmake session~ load it. It jacks CIDER in to babashka, puts clj-kondo's findings in the buffer through Flymake, makes ~C-c C-c~ inside a ~comment~ block evaluate one form, shows keystrokes in the header line when keycast is installed, and keeps a log of every nREPL message. ~M-x spectre-test-ns~ runs the tests for the buffer's namespace.
+
+** For an agent
+
+~.claude/settings.json~ has two hooks: the session status is put in context at start, and every Write and Edit of a Clojure file has its delimiters balanced and is formatted with cljfmt. ~dev/claude-plugins/~ is a local plugin that puts ~clojure-lsp~ behind Claude Code's LSP tool. [[file:AGENTS.md][AGENTS.md]] is the contract.
+
+** Checkouts
+
+~main~ carries the tooling. Exercises are worked on branches in ~worktrees/~, each with its own ~db.edn~, nREPL port, bbin directory and tmux session, derived in ~.envrc~. A new worktree needs ~gmake .env~ and ~direnv allow~ once.
+
 * License
 
 Copyright (c) Michiel Borkent and Rahul De

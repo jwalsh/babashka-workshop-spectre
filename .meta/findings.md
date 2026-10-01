@@ -1,7 +1,8 @@
 # Findings
 
-What bit, and what was done about it. Numbered so they can be cited; newest
-last. Each was hit, not reasoned to.
+What bit, and what was done about it. Numbered so they can be cited: a number
+is never reused and a new entry takes the next one, so within a section the
+order is not by number. Each was hit, not reasoned to.
 
 ## REPL and editor
 
@@ -40,6 +41,34 @@ last. Each was hit, not reasoned to.
     `brepl -p <port>` reaches the right one. A redefinition shows on the next
     keypress, not before.
 
+## Looking things up
+
+31. **Doc lookup by alias needs the namespace loaded.** `C-c C-d d` on
+    `fs/which` in a file that has not been loaded finds nothing: the alias
+    resolves through the buffer's namespace, and the REPL has none by that
+    name until `C-c C-k`. A full name resolves in a REPL with nothing loaded.
+32. **Babashka's nREPL is not cider-nrepl.** It answers `info`, `lookup`,
+    `eldoc`, `complete` and the test ops. It does not answer apropos,
+    ClojureDocs lookup, macroexpand, `fn-refs`, `undef` or refresh, so
+    `C-c C-d a`, `s`, `c` and `C-c RET` stop at "requires the nREPL op". It
+    gives no line number for anything, and for `babashka.*` a file that is
+    not on disk, so `M-.` has nowhere to go. `clojure.repl`'s `doc`, `dir`,
+    `apropos` and `source` all work, `source` included for functions compiled
+    into the binary.
+33. **The JVM REPL has the rest.** `gmake nrepl-jvm` in a worktree: 183 ops,
+    the exercise namespaces load, `fs/which` resolves to `fs.cljc:1706`
+    inside the library's jar, and `password` returns what babashka returns.
+    It writes `.nrepl-port` and removes it on exit; `gmake nrepl` writes
+    none. Started beside a jacked-in session it takes `brepl` and `gmake
+    status` away from that session.
+34. **`p/shell` prints into the nREPL server, not the REPL.** It inherits the
+    server's stdout, so the output shows in the `*nrepl-server ...*` buffer.
+    `p/sh`, or `{:out :string}`, returns it as a value.
+35. **Explorations in a `comment` block use the requires**, so clj-kondo
+    stops reporting them unused, and stops reporting `tools` unused. The
+    underlines are not a count of what is left. `gmake todos` and the tests
+    are.
+
 ## Environment
 
 11. **Do not override `XDG_CONFIG_HOME` per checkout.** The workshop reads it
@@ -51,7 +80,11 @@ last. Each was hit, not reasoned to.
 14. **A worktree with no `.envrc` inherits the parent checkout's direnv
     values**, and so does a tmux server started from it. In `conj-26` the TUI
     came up prefilled with the template identity, and writes would have gone
-    to the parent's `db.edn` path. Pass `SPECTRE_DB` explicitly there.
+    to the parent's `db.edn` path. Pass `SPECTRE_DB` explicitly there. An
+    agent's shell does the same in any worktree, `.envrc` or not: it keeps the
+    environment Claude Code started with. In `worktrees/e1`, `gmake status`
+    reported `NREPL_PORT` 1667 against a derived 1822, and `SPECTRE_DB` was
+    the main checkout's. `direnv exec .` gives the worktree its own.
 15. **`db/default-path` is a `def`**: `SPECTRE_DB` is read once at namespace
     load. Changing it in a live REPL does nothing without a reload.
 
@@ -76,6 +109,29 @@ last. Each was hit, not reasoned to.
 20. **cljfmt in the edit hook costs nothing here.** The sources already
     conform, and a one-line edit to copies of three files changed only that
     line. Objection withdrawn after measuring.
+36. **One empty answer is not "unsupported".** The first LSP hover on
+    `Mac/getInstance`, a minute after the server started, came back empty,
+    and "Java interop does not resolve" went into a README. The same position
+    returned the Javadoc a few minutes later. Ask twice before recording a
+    negative.
+37. **Reading the editor through `emacsclient` is safe; opening things in it
+    is not.** To test whether a transient menu could open, `transient-setup`
+    and then `transient-quit-all` were called from `emacsclient`. The quit ran
+    outside the command loop, and the eval menu stayed on the user's screen
+    for ten minutes. Closing it took a real event: `C-g` pushed onto
+    `unread-command-events`. Check a cause some way that draws nothing.
+42. **Writing a file the user has open with unsaved edits makes their next
+    save a conflict.** A one-line whitespace fix to `core.clj` went to disk
+    while its buffer was modified. Undone: the file was put back to `HEAD`
+    and the buffer's recorded modification time resynced with
+    `set-visited-file-modtime`, so the save does not prompt. Ask
+    `buffer-modified-p` first.
+38. **A document can agree with itself and still be wrong.** The Makefile's
+    help said the default database is `~/.config/spectre-db.edn`; the code
+    says `~/.config/spectre/db.edn`. A key table listed `C-c C-d a` because
+    the menu has that entry, not because it works on babashka. `gmake docs`
+    now checks what can be checked mechanically: targets, commands, links
+    and the walkthrough's results.
 
 ## Observing a TUI through tmux
 
@@ -103,3 +159,19 @@ last. Each was hit, not reasoned to.
     shims that fail without the Command Line Tools.
 30. **A buffer with no file is linted as `stdin.clj`**, so clj-kondo reports a
     namespace mismatch unless the `ns` is `stdin`. Real files are unaffected.
+39. **An Org search link wrapped in parentheses is read as a code
+    reference.** A link to `src/tour.clj` searching for `(fs/which "git")`
+    fails with an rx error; without the outer parentheses it lands on the
+    line. Found by following every new link in the running Emacs, not by
+    reading them. Links by search text also survive an exercise being
+    implemented, which a line number in `cli.clj` would not.
+41. **A result copied from a terminal can hide what it is.** The walkthrough
+    showed the salt as a string with three spaces before the length byte.
+    They are NUL bytes; Emacs shows `^@`. `gmake docs` compares values, not
+    how they print, and that is how it surfaced. The form now returns the
+    bytes.
+40. **A Claude Code plugin with an LSP server needs a new session.**
+    `/reload-plugins` loaded the plugin and started no server; and a
+    marketplace added from a shell was not found by `/plugin install` in a
+    session already running. `dev/claude-plugins/plugins/clojure-lsp/README.md`
+    has the route that worked.
