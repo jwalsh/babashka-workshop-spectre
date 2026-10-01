@@ -97,12 +97,13 @@ reading, and say which one a claim came from.
 
 `exercises.org` is the exercise text; `walkthrough.org` is the reading order
 for `core.clj` and what loads what.
-`.meta/experience-report.md` is the report from the setup session: findings,
-what was never verified, and what is open. Read it when starting cold.
+`.meta/README.md` is where things stand: what is open and what was never
+verified. Read it when starting cold.
 
-Findings go in `.meta/` as you hit them: experiments, deviations from the
-workshop, testing lessons, tooling and DX notes. This repo has no git notes,
-so do not start keeping them there; one place is enough.
+Findings go in `.meta/findings.md` as you hit them, one numbered entry each:
+what bit and what was done. Keep `.meta/README.md` current instead of adding
+a file per session. This repo has no git notes, so do not start keeping them
+there; one place is enough.
 
 ## Worktrees
 
