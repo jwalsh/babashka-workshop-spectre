@@ -152,6 +152,17 @@ order is not by number. Each was hit, not reasoned to.
     predates the explorations, so the document and the tool had stopped
     agreeing, and nothing said so. A usage that falls inside a top-level
     `(comment ...)` is now kept apart, as `:explores`.
+52. **A keyword where an options map goes is not an error anywhere.**
+    `(derive mkey "clojars.org" :login)` returned the `:password` result.
+    Destructuring `{:keys [...] :or {...}}` against a keyword finds no keys
+    and takes every default, on Clojure 1.12 and on 1.13.0-alpha8 alike, and
+    clj-kondo had nothing to check the call against. `.clj-kondo/config.edn`
+    now says what `master-key`, `derive` and `password` take, the options as
+    `{:op :keys ...}`, and the call is underlined: "Expected: map, received:
+    keyword". A value of the wrong kind inside the map is caught too; a
+    misspelt key is not. 1.13's `:keys!` throws "Missing required key" on
+    such a call, in this babashka as well, but only by making a key required,
+    and all three of `derive`'s are optional.
 45. **A manifest that names a path works on the machine that wrote it.** The
     first `dev/resources.edn` gave the directory one Emacs package manager
     keeps its checkouts in, and fetched all 24 entries. In a public repo that

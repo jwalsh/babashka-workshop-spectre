@@ -1,1 +1,28 @@
-{:lint-as {babashka.ffi/defcfn clj-kondo.lint-as/def-catch-all}}
+{:lint-as {babashka.ffi/defcfn clj-kondo.lint-as/def-catch-all}
+
+ ;; What the three public functions of spectre.core take, so that a call
+ ;; with the wrong kind of argument is underlined where it is typed. Nothing
+ ;; objects at run time: (derive mkey site :login) destructures the keyword
+ ;; as if it were an empty map and returns the :password result.
+ ;;
+ ;; The options are an open map: a value of the wrong kind is caught, a
+ ;; misspelt key is not.
+ :linters
+ {:type-mismatch
+  {:level :warning
+   :namespaces
+   {spectre.core
+    {master-key {:arities {2 {:args [:string :string]}
+                           3 {:args [:string :string :keyword]}}}
+     derive {:arities {2 {:args [:any :string]
+                          :ret :string}
+                       3 {:args [:any :string {:op :keys
+                                               :opt {:counter :int
+                                                     :variant :keyword
+                                                     :template :keyword}}]
+                          :ret :string}}}
+     password {:arities {4 {:args [:string :string :string {:op :keys
+                                                            :opt {:counter :int
+                                                                  :variant :keyword
+                                                                  :template :keyword}}]
+                            :ret :string}}}}}}}}
