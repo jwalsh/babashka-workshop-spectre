@@ -82,6 +82,13 @@ else the 1667 both commands default to."
 ;; they would prompt on every file.
 (setq cider-repl-display-help-banner nil)
 
+;; Keep every request and response in *nrepl-messages ...*.  An evaluation
+;; from a source buffer leaves nothing in the REPL buffer, so without this
+;; the only record of what was evaluated is the `=> value' lines in
+;; *Messages*, which have the value and not the form.
+(defvar nrepl-log-messages)
+(setq nrepl-log-messages t)
+
 ;; In a (comment ...) block, evaluate the form at point, not the whole
 ;; block: that is where the explorations in walkthrough.org are typed.
 (defvar clojure-toplevel-inside-comment-form)
