@@ -2,3 +2,4 @@
 .lsp/.cache
 .clj-kondo/.cache
 db.edn
+.env
