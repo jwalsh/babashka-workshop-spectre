@@ -60,7 +60,18 @@
                   (setq bound (1+ bound))
                   (should (commandp command)))
                 spectre-map)
-    (should (= 11 bound))))
+    (should (= 12 bound))))
+
+(ert-deftest spectre-test-blocking-finds-ancestors ()
+  "The checkout and the directories above it block; siblings and remotes do not."
+  (let ((root "/home/someone/src/spectre/"))
+    (should (equal '("/home/someone/" "/home/someone/src/spectre")
+                   (spectre--blocking '("/home/someone/"
+                                        "/home/someone/src/other"
+                                        "/ssh:host:/home/someone/"
+                                        "/home/someone/src/spectre")
+                                      root)))
+    (should-not (spectre--blocking nil root))))
 
 (ert-deftest spectre-test-no-unsafe-dir-locals ()
   "Opening a file must not prompt: every dir-local is a safe one."

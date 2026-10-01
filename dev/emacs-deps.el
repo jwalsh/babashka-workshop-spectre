@@ -11,7 +11,8 @@
 ;; Each check does something with the package instead of only finding it:
 ;; clojure-mode reads a namespace, paredit slurps, CIDER jacks in to a real
 ;; babashka nREPL and evaluates.  The exception is the language server, which
-;; is only checked for a client, a registered server and a binary that runs.
+;; is only checked for a client, a registered server, a binary that runs and
+;; a checkout lsp-mode has not been told to ignore.
 ;;
 ;; Exits 1 when something the wiring needs (clojure-mode, CIDER) fails.
 
@@ -33,6 +34,9 @@
 (declare-function org-babel-execute-src-block "ob-core")
 (declare-function org-version "org-version")
 (declare-function paredit-forward-slurp-sexp "paredit")
+(declare-function lsp-session "lsp-mode")
+(declare-function lsp-session-folders-blocklist "lsp-mode")
+(declare-function spectre--blocking "babashka-workshop-spectre")
 (declare-function spectre-jack-in "babashka-workshop-spectre")
 
 (defvar spectre-deps--rows nil
@@ -130,6 +134,15 @@ non-nil when a failure should fail the whole run."
                                      eglot-server-programs))
                        "eglot")
                       (t (error "No lsp-mode or eglot client for Clojure")))))
+    ;; The session file is the one thing here that is not about what is
+    ;; installed: it is read from `user-emacs-directory', where a running
+    ;; Emacs reads it too.
+    (when-let* (((equal client "lsp-mode"))
+                (blocking (spectre--blocking
+                           (lsp-session-folders-blocklist (lsp-session))
+                           spectre-root)))
+      (error "Installed, but %s is on the lsp blocklist; M-x spectre-lsp"
+             (string-join blocking ", ")))
     (format "%s + %s  (not started here)"
             client
             (car (process-lines binary "--version")))))

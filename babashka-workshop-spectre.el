@@ -21,6 +21,7 @@
 ;;   M-x spectre-todos      ; the TODOs left, as links
 ;;   M-x spectre-screenshare ; keycast in the header line, for recordings
 ;;   M-x spectre-test-ns    ; `bb test --nses' for the buffer's namespace
+;;   M-x spectre-lsp        ; lsp-mode here, unblocking the checkout first
 ;;
 ;; `spectre-map' holds all of it; bind it under a prefix, e.g.
 ;;   (global-set-key (kbd "C-c s") spectre-map)
@@ -28,6 +29,7 @@
 ;;; Code:
 
 (require 'compile)
+(require 'seq)
 (require 'subr-x)
 
 (defvar cider-repl-display-help-banner)
@@ -40,6 +42,11 @@
 (declare-function cider-connected-p "cider-connection")
 (declare-function cider-load-buffer "cider-eval")
 (declare-function clojure-find-ns "clojure-mode")
+(declare-function lsp "lsp-mode")
+(declare-function lsp-session "lsp-mode")
+(declare-function lsp-session-folders-blocklist "lsp-mode")
+(declare-function lsp-workspace-blocklist-remove "lsp-mode")
+(declare-function lsp-workspace-folders-add "lsp-mode")
 
 (defgroup spectre nil
   "Working babashka-workshop-spectre from Emacs."
@@ -219,6 +226,42 @@ rest of the middleware work, `babashka.nrepl.server' does not exist."
         (kill-process (get-buffer-process buffer))
       (message "no nREPL started from here"))))
 
+;;;; Language server
+
+(defun spectre--blocking (blocklist root)
+  "The entries of BLOCKLIST that are ROOT or a directory above it.
+lsp-mode will not start in a file under a blocklisted directory, however
+the checkout itself is registered: one stray answer to its \"import
+project root?\" prompt at ~ and every project under it goes quiet."
+  ;; By name, as lsp-mode compares them: `file-in-directory-p' wants the
+  ;; directory to exist.
+  (let ((checkout (file-name-as-directory (expand-file-name root))))
+    (seq-filter (lambda (entry)
+                  (and (not (file-remote-p entry))
+                       (string-prefix-p (file-name-as-directory (expand-file-name entry))
+                                        checkout)))
+                blocklist)))
+
+(defun spectre-lsp ()
+  "Start lsp-mode in the current buffer with this checkout as its workspace.
+Takes the checkout, and any directory above it, off lsp-mode's blocklist
+first, and says which entries it removed.  That edits your lsp session
+file, which is shared by every project."
+  (interactive)
+  (if (require 'lsp-mode nil t)
+      (let* ((root (spectre--root))
+             (blocking (spectre--blocking
+                        (copy-sequence (lsp-session-folders-blocklist (lsp-session)))
+                        root)))
+        (dolist (entry blocking)
+          (lsp-workspace-blocklist-remove entry))
+        (lsp-workspace-folders-add (directory-file-name root))
+        (when blocking
+          (message "Took %s off the lsp blocklist" (string-join blocking ", ")))
+        (when buffer-file-name
+          (lsp)))
+    (message "lsp-mode is not installed")))
+
 ;;;; Tests
 
 (defun spectre--test-ns ()
@@ -265,6 +308,7 @@ In src/spectre-db.clj and in test/spectre-db_test.clj alike, that is
     (define-key m (kbd "o") #'spectre-todos)
     (define-key m (kbd "e") #'spectre-exercises)
     (define-key m (kbd "k") #'spectre-screenshare)
+    (define-key m (kbd "l") #'spectre-lsp)
     m)
   "Commands for the workshop, intended to be bound under a prefix.")
 (fset 'spectre-map spectre-map)
