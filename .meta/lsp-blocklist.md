@@ -4,11 +4,11 @@
 
 Opening `src/spectre/core.clj` gave, in `*Messages*`:
 
-    LSP :: File .../src/spectre/core.clj is in blocklisted directory /Users/jasonwalsh/
+    LSP :: File .../src/spectre/core.clj is in blocklisted directory ~/
     LSP :: core.clj not in project or it is blocklisted.
 
-`~/.emacs.d/.lsp-session-v1` had `/Users/jasonwalsh/` in
-`folders-blocklist`, and 72 workspace folders, none of them this repo.
+`~/.emacs.d/.lsp-session-v1` had the home directory in
+`folders-blocklist`, and many workspace folders, none of them this repo.
 lsp-mode checks the blocklist before the workspace folders
 (`lsp--calculate-root`), and an entry blocks everything under it, so
 registering the checkout would not have been enough. The entry comes from
