@@ -1,0 +1,216 @@
+#+TITLE: Reading core.clj at the REPL
+#+STARTUP: showall
+
+A path through [[file:src/spectre/core.clj][src/spectre/core.clj]] before E1: read it top to bottom, load it, then poke at the pieces from the ~(comment ...)~ block at the bottom. Every result below was produced by evaluating the form in babashka 1.13.223 with this repo's code.
+
+* What loads what
+
+~gmake namespaces~ prints every namespace after the ones it requires, which is the order the REPL loads them in. ~gmake namespaces NS=spectre.cli~ narrows it to one namespace and what loading it pulls in.
+
+#+begin_example
+ 1  spectre.clipboard   src/spectre/clipboard.clj      E2, stub
+      libraries:   babashka.fs babashka.process
+ 2  spectre.scrypt      src/spectre/scrypt.clj         given
+      libraries:   babashka.fs babashka.process clojure.string
+ 3  spectre.core        src/spectre/core.clj           given, E1 adds tests
+      loads first: spectre.scrypt
+      libraries:   clojure.string
+ 4  spectre.db          src/spectre/db.clj             E3, stub
+      libraries:   babashka.fs clojure.edn clojure.pprint
+ 5  spectre.identicon   src/spectre/identicon.clj      given
+ 6  spectre.term        src/spectre/term.clj           given
+ 7  spectre.cli         src/spectre/cli.clj            E4
+      loads first: spectre.clipboard spectre.core spectre.db spectre.identicon spectre.term
+      libraries:   babashka.cli
+12  spectre.tui2        src/spectre/tui2.clj           E5
+      loads first: spectre.core spectre.db spectre.identicon
+      libraries:   charm.* clojure.string
+#+end_example
+
+The shape: ~core~ sits on ~scrypt~ and nothing else of ours. ~clipboard~, ~db~, ~identicon~ and ~term~ are leaves that know nothing about each other. ~cli~ and the two TUIs are where they meet. So the exercises go leaf by leaf (E2, E3) and then wire the leaves together (E4, E5), and nothing you break in a later exercise can break ~core~.
+
+[[file:src/tour.clj][src/tour.clj]] is separate from all of it: evaluable examples of ~babashka.fs~, ~babashka.process~, ~babashka.cli~ and ~babashka.ffi~. It is the place to look when a TODO says "use ~fs/which~" and you want to see the call first.
+
+* Loading core.clj
+
+Open ~src/spectre/core.clj~ and ~M-x spectre-jack-in~. Then:
+
+| key       | does                                                        |
+|-----------+-------------------------------------------------------------|
+| ~C-c C-k~ | load the whole buffer                                       |
+| ~C-c C-c~ | evaluate the top-level form at point (also ~C-M-x~)         |
+| ~C-x C-e~ | evaluate the form before point                              |
+| ~C-c C-p~ | the same, pretty-printed in a popup: use it for the big maps |
+| ~C-c C-z~ | switch to the REPL buffer                                   |
+| ~C-c M-n M-n~ | put the REPL in this buffer's namespace                  |
+
+Inside a ~(comment ...)~ block, ~C-c C-c~ evaluates the one form at point, not the whole block: the workshop's Emacs wiring sets ~clojure-toplevel-inside-comment-form~ for that.
+
+~C-c C-k~ on ~core.clj~ loads two namespaces, in this order:
+
+1. The ~ns~ form runs first. Its ~:require~ of ~spectre.scrypt~ loads [[file:src/spectre/scrypt.clj][scrypt.clj]], which in turn loads ~babashka.fs~ and ~babashka.process~. Nothing is executed yet: ~openssl~ there is a ~delay~, so the search for an OpenSSL 3 binary does not happen at load time.
+2. Then each form in ~core.clj~, top to bottom. They are all ~def~ and ~defn~: loading defines things and computes nothing.
+3. The ~(comment ...)~ at the bottom is read and discarded.
+
+To get the same understanding form by form instead, start at the ~ns~ form and press ~C-c C-c~ on each one going down. A ~defn-~ evaluated before the helper it calls is fine (the call is resolved when it runs); a ~def~ whose value uses something not yet defined is not, and there are none of those here.
+
+* Reading order inside core.clj
+
+The file is written bottom-up, so reading top to bottom meets each piece before its first use.
+
+| form                              | what it is                                                                  |
+|-----------------------------------+-----------------------------------------------------------------------------|
+| ~scope~                           | variant keyword to the salt prefix string                                   |
+| ~templates~                       | template keyword to a vector of patterns, one letter per output character   |
+| ~char-classes~                    | pattern letter to the characters it may become                              |
+| ~u32~ ~utf8~ ~cat-bytes~ ~ub~     | byte plumbing: ints and strings to bytes, concatenation, unsigned read      |
+| ~master-key~                      | name + master password to 64 bytes, through scrypt. The only slow step      |
+| ~site-seed~                       | master key + site + counter to 32 bytes, through HMAC-SHA256                |
+| ~derive~                          | seed to password: byte 0 picks the pattern, bytes 1.. pick each character   |
+| ~password~                        | ~master-key~ then ~derive~ in one call                                      |
+
+The flow, with what varies at each step:
+
+#+begin_example
+full name, master password, variant
+        |  scrypt (N=32768 r=8 p=2), salt = scope + len(name) + name
+        v
+   master key, 64 bytes          <- per person; compute once
+        |  HMAC-SHA256 over scope + len(site) + site + counter
+        v
+   site seed, 32 bytes           <- per site, counter, variant
+        |  seed[0] mod (count patterns)  -> one pattern from the template
+        |  seed[i+1] mod (count class)   -> one character per pattern letter
+        v
+   password
+#+end_example
+
+Nothing is stored anywhere in that. The same inputs give the same password, which is why E3's ~db.edn~ only has to remember the counter, template and variant per site.
+
+* Explorations for the comment block
+
+Type or paste these into the ~(comment ...)~ at the bottom of ~core.clj~ and evaluate them one at a time. You are inside ~spectre.core~ there, so the private helpers are callable. The ~;; =>~ lines are what you should see.
+
+** The byte plumbing
+
+#+begin_src clojure :eval no
+(seq (u32 1))                           ;; => (0 0 0 1)
+(seq (u32 258))                         ;; => (0 0 1 2)       big-endian
+(seq (utf8 "é"))                        ;; => (-61 -87)       JVM bytes are signed
+(ub (byte-array [-1]) 0)                ;; => 255             which is why ub exists
+(seq (cat-bytes (utf8 "ab") (u32 2)))   ;; => (97 98 0 0 0 2)
+#+end_src
+
+** The salt, then the master key
+
+#+begin_src clojure :eval no
+(scope :password)   ;; => "com.lyndir.masterpassword"
+
+;; the salt master-key builds: scope, the name's length as four bytes, the name
+(let [n (utf8 "John Doe")]
+  (String. (cat-bytes (utf8 (scope :password)) (u32 (alength n)) n) "ISO-8859-1"))
+;; => "com.lyndir.masterpassword   \bJohn Doe"     the \b is the length, 8
+
+;; the slow step, about 0.2s here. def it once and reuse it below
+(def mkey (master-key "John Doe" "correct horse battery staple"))
+(alength mkey)                  ;; => 64
+(map #(ub mkey %) (range 4))    ;; => (224 81 33 146)
+#+end_src
+
+** From seed to password, by hand
+
+This is ~derive~ taken apart. Do it once and the ~map-indexed~ in ~derive~ reads itself.
+
+#+begin_src clojure :eval no
+(def seed (site-seed mkey "example.com" 1 :password))
+(alength seed)                  ;; => 32
+(map #(ub seed %) (range 5))    ;; => (92 83 250 131 5)
+
+;; byte 0 picks one of the 21 :long patterns
+(count (templates :long))                                             ;; => 21
+(mod (ub seed 0) (count (templates :long)))                           ;; => 8      92 mod 21
+(nth (templates :long) (mod (ub seed 0) (count (templates :long))))   ;; => "CvcvCvccCvcvno"
+
+;; byte 1 picks the first character, a \C: one of 21 upper-case consonants
+(let [cs (char-classes \C)]
+  [(count cs) (ub seed 1) (mod (ub seed 1) (count cs)) (nth cs (mod (ub seed 1) (count cs)))])
+;; => [21 83 20 \Z]
+
+(derive mkey "example.com")     ;; => "ZahaJofnPuho4-"     starts with that Z
+#+end_src
+
+** What each input changes
+
+These are E1's sanity tests in REPL form: get them working here, then turn them into ~is~ assertions in [[file:test/spectre/core_test.clj][core_test.clj]].
+
+#+begin_src clojure :eval no
+(derive mkey "example.com")                           ;; => "ZahaJofnPuho4-"
+(derive mkey "example.com" {:counter 2})              ;; => "GoyeDuveVext7-"
+(derive mkey "example.org")                           ;; => "PergGutp8=Laca"
+(derive mkey "example.com" {:template :pin})          ;; => "3015"
+(derive mkey "example.com" {:template :phrase})       ;; => "za hecfe mos nosovbi"
+(derive mkey "example.com" {:template :maximum})      ;; => "b0+aejObRu&7LB&Y#j%h"
+(= (derive mkey "example.com") (derive mkey "example.com"))   ;; => true
+
+;; a different variant needs its own master key: the variant is in the salt
+(derive (master-key "John Doe" "correct horse battery staple" :login)
+        "example.com" {:variant :login :template :name})
+;; => "boxpayitu"
+
+;; how many patterns each template chooses between
+(into {} (map (fn [[k v]] [k (count v)]) templates))
+;; => {:maximum 2, :long 21, :medium 2, :basic 3, :short 1, :pin 1, :name 1, :phrase 3}
+#+end_src
+
+The ~:maximum~ result is the value the existing ~comment~ block and ~core_test.clj~ assert, so that line doubles as a check that your setup derives correctly.
+
+** One level down: scrypt and the identicon
+
+#+begin_src clojure :eval no
+;; which OpenSSL scrypt shells out to. Forcing the delay is what runs the search
+@@#'spectre.scrypt/openssl
+;; => "/opt/homebrew/opt/openssl@3/bin/openssl"
+
+;; not used by core, but E4 and E5 show it: four characters from name + master
+(require 'spectre.identicon)
+(spectre.identicon/identicon-of "John Doe" "correct horse battery staple")
+;; => "═█╗⌚"
+#+end_src
+
+The OpenSSL path is this machine's; yours is whatever ~gmake deps~ reports.
+
+* The same session, driven from outside
+
+Everything above can be done by something other than you at the keyboard, against the same REPL. That is the point of it: an agent that can evaluate ~(derive mkey "example.com")~ knows what the code does, not only what the file says.
+
+#+begin_src sh :eval no
+gmake session        # Emacs in a detached tmux session, jacked in, core.clj loaded
+tmux attach -t spectre    # you, watching or typing; C-b d to detach
+gmake session-shot   # what the screen shows, as text
+gmake session-stop
+#+end_src
+
+~gmake session FILE=src/spectre/db.clj~ starts on another file. In a worktree the session is named ~spectre-<directory>~, so each checkout has its own.
+
+The REPL is reachable without Emacs, through the ~.nrepl-port~ file babashka writes in the checkout. [[https://github.com/licht1stein/brepl][brepl]] reads that file:
+
+#+begin_src sh :eval no
+brepl -e '(count (ns-publics (quote spectre.core)))'      # => 6
+brepl -e '(in-ns (quote spectre.core)) (seq (u32 258))'   # => (0 0 1 2)
+#+end_src
+
+So there are three ways in, and they see the same state: keys sent to the tmux session (~tmux send-keys -t spectre ...~), forms sent to the nREPL port, and you. A ~def~ made through one is visible to the others.
+
+There is no Clojure language-server plugin in the Claude Code plugin directory at the time of writing. The ~clojure-lsp~ binary covers the same ground from the shell: ~clojure-lsp diagnostics~, ~clojure-lsp references --from spectre.core/derive~, and ~clojure-lsp dump~ for the whole analysis.
+
+* After core
+
+Follow the same pattern for each exercise file: ~gmake namespaces NS=<namespace>~ for what it loads, ~gmake todos E=e3~ for the stubs, ~C-c C-k~, then explore from its ~comment~ block. Loading a stub file works before the exercise is done: the functions exist and return ~nil~.
+
+For the library calls the TODOs name, look in [[file:src/tour.clj][tour.clj]] first, then ask the REPL:
+
+#+begin_src clojure :eval no
+(require '[babashka.fs :as fs] '[clojure.repl :refer [doc dir]])
+(dir babashka.fs)     ;; every public name in the namespace
+(doc fs/which)        ;; arguments and docstring
+#+end_src

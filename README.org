@@ -42,6 +42,8 @@ For editor support, install:
 
 In Emacs, open [[file:exercises.org][exercises.org]] and run the command blocks with ~C-c C-c~.
 
+Before E1, [[file:walkthrough.org][walkthrough.org]] is a path through ~core.clj~ at the REPL: what loads what, the order to read it in, and forms to evaluate from its ~comment~ block.
+
 * License
 
 Copyright (c) Michiel Borkent and Rahul De
