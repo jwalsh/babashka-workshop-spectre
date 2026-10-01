@@ -1,0 +1,10 @@
+{
+  "hooks" : {
+    "SessionStart" : [ {
+      "hooks" : [ {
+        "type" : "command",
+        "command" : "bb \"$CLAUDE_PROJECT_DIR/dev/session-status.bb\""
+      } ]
+    } ]
+  }
+}
