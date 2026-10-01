@@ -144,6 +144,14 @@ order is not by number. Each was hit, not reasoned to.
     the menu has that entry, not because it works on babashka. `gmake docs`
     now checks what can be checked mechanically: targets, commands, links
     and the walkthrough's results.
+49. **A require inside a `comment` block counts, to clj-kondo, as a require.**
+    Once the explorations in `clipboard.clj` and `db.clj` opened with
+    `(require '[clojure.repl ...])`, `gmake namespaces` listed `clojure.repl`
+    among the libraries those namespaces load. Loading the file runs nothing
+    in a `comment`. The block pasted from that target into `walkthrough.org`
+    predates the explorations, so the document and the tool had stopped
+    agreeing, and nothing said so. A usage that falls inside a top-level
+    `(comment ...)` is now kept apart, as `:explores`.
 45. **A manifest that names a path works on the machine that wrote it.** The
     first `dev/resources.edn` gave the directory one Emacs package manager
     keeps its checkouts in, and fetched all 24 entries. In a public repo that
@@ -205,3 +213,14 @@ order is not by number. Each was hit, not reasoned to.
     fixed it and something else with it: a data file no longer runs commands.
     Manual pages are a kind of their own, and the overstriking `col -b`
     removed is one regex.
+48. **make predefines `AS`.** It is the name of the assembler, `as`, so
+    `$(if $(AS),--as $(AS))` passed `--as as` to every run that gave no
+    `AS`: `gmake files` failed outright. The first try had given one, and
+    passed. Only an `AS` whose `$(origin AS)` is the command line or the
+    environment is passed on now. `gmake -p -f /dev/null` lists what else is
+    taken; no other option name used here is.
+50. **mermaid-cli could not draw until it was told which browser.** `mmdc`
+    wanted one Chromium revision and the puppeteer cache held others. A
+    file naming one of those, passed with `-p`, drew every diagram, which is
+    how the generated Mermaid was checked. `ob-mermaid` runs the same
+    `mmdc`.

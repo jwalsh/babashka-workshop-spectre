@@ -45,8 +45,37 @@ own state, logs, hooks, a language server.
   shelf for the clone. `resources/INDEX.org` lists what is there; a clone
   has none until the target is run. `README.org` says what to read for
   which exercise, and `gmake guard-resources` is the check before a push.
+- A scaffold for the parts of a document that the files can say for
+  themselves. `gmake files` and `gmake namespaces` write the file list and
+  the load graph as text, EDN, an Org table or Mermaid (`AS=`). `gmake
+  blocks` rebuilds every Org dynamic block named `workshop` from them and
+  `CHECK=1` reports the ones that are behind. No document has such a block
+  yet: it was tried on scratch documents only.
 
 ## Open
+
+- The generated blocks, in the order they would be done:
+  1. `walkthrough.org` opens with a block pasted from `gmake namespaces` and
+     annotated by hand. As `#+BEGIN: workshop :view namespaces :as text
+     :from "spectre.cli spectre.tui2"` it would be the same eight
+     namespaces. It would lose "stub" and "given, E1 adds tests", which no
+     file says, and `charm.*` would be spelled out.
+  2. `gmake docs` does not look at blocks. A stale one should fail it:
+     `workshop.blocks/problems` returns what `CHECK=1` prints.
+  3. Emacs cannot rebuild one. `C-c C-x C-u` on a block looks for
+     `org-dblock-write:workshop`; the wiring would define it over
+     `bb -cp dev -m workshop.blocks --emit`, which also spares an open
+     buffer from going stale under a rewrite on disk.
+  4. `PROGRESS=1` puts the TODOs left into the graph. In a document that
+     makes the block change as the exercises are worked, on branches where
+     documents are not meant to change. Undecided; off unless asked for.
+  5. A third view, who calls an exercise's stubs, from clj-kondo's var
+     usages: the maps under E2 to E4 in `exercises.org` are that, made by
+     hand, with notes beside them that no file holds.
+  6. Drawing. `mmdc` here cannot start its browser (finding 50), which
+     `ob-mermaid` would hit too. A block takes `:file` for the image; where
+     images would live is not decided. GitHub shows Mermaid in an Org file
+     as source.
 
 - `gmake deps-emacs` runs in batch and reports `ok` for things a real
   session does not have. See findings 17 to 19. The check that answers is
@@ -105,3 +134,12 @@ own state, logs, hooks, a language server.
   path that does not exist, which leaves the Info entry `kept`.
 - Reading a shelf copy of an Info manual inside Emacs (`C-u C-h i`). The
   files were checked as text.
+- `gmake blocks` on a document of this repo: none has a block. Rewriting,
+  checking, a hand edit, a moved require and four kinds of unreadable block
+  were run on scratch documents.
+- `gmake blocks` refusing a file with unsaved edits in a real Emacs. The form
+  it asks with was run read-only against the running one and answered
+  rightly for a modified, an open and an unopened file; the refusal itself
+  was run against a stand-in for `emacsclient`.
+- A generated Mermaid block drawn inside Emacs, or by anything but `mmdc`
+  pointed at a browser by hand.
