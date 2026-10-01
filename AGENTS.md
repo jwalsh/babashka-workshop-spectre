@@ -43,9 +43,10 @@ A claim about what the code does should come from running it.
   one-off.
 - `clojure-lsp diagnostics`, `clojure-lsp references --from ns/var` for
   static questions. There is no Clojure LSP plugin or MCP server configured.
-- `gmake tags` writes `./tags` (Universal Ctags): one line per `defn`,
+- `gmake tags` writes `./.tags` (Universal Ctags): one line per `defn`,
   `defn-`, `def`, `deftest` and `ns`, with file and line. `awk -F'\t'
-  '$1=="derive"' tags` finds a definition. GitNexus does not parse Clojure
+  '$1=="derive"' .tags` finds a definition. `gmake TAGS` is the Emacs table:
+  a real file target, rebuilt only when a source file is newer than it. GitNexus does not parse Clojure
   (its index of this repo holds files only), so do not use it here.
 
 A SessionStart hook (`.claude/settings.json`) runs `dev/session-status.bb`

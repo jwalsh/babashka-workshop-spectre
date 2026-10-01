@@ -43,19 +43,20 @@ namespaces: ## Namespaces in load order with their requires (NS=spectre.cli for 
 	@bb -cp dev -m workshop.namespaces $(if $(NS),--from $(NS))
 
 # The symbol index, in place of a code graph: nothing here parses Clojure for
-# one. Options are in .ctags.d/. One file, ignored locally: no Emacs-format
-# TAGS beside it, because on a case-insensitive filesystem that is the same
-# file as tags, and CIDER and the language server do the jumping in Emacs.
-tags: ## Symbol index with Universal Ctags: every defn, defn-, def, deftest and ns with its line
-	@$(CTAGS) -R -f tags src test dev && echo "$$(grep -vc '^!' tags) tags in ./tags"
+# one. Options are in .ctags.d/. Written to .tags, not tags: on a
+# case-insensitive filesystem tags is the same file as TAGS, and that name is
+# the Emacs table below. Ignored locally. Phony, so it always regenerates.
+tags: ## Symbol index with Universal Ctags in .tags: every defn, defn-, def, deftest and ns with its line
+	@$(CTAGS) -R -f .tags src test dev && echo "$$(grep -vc '^!' .tags) tags in ./.tags"
 
-# A real file target, rebuilt only when a source file is newer. Emacs's own
-# etags has no Clojure parser, but its Lisp one tags every (def... form.
-# Named ETAGS because TAGS would be the same file as tags here. Ignored
-# locally. In Emacs: M-x visit-tags-table RET ETAGS.
+# NOT phony: TAGS is a real file target that depends on the Clojure sources.
+# It is rebuilt only when one of them is newer than it; otherwise gmake TAGS
+# says it is up to date. Emacs's own etags has no Clojure parser, but its
+# Lisp one tags every (def... form. Ignored locally. Emacs looks for a file
+# named TAGS by itself, or M-x visit-tags-table.
 CLOJURE_SOURCES := $(shell find src test dev -name '*.clj' -o -name '*.bb')
 
-ETAGS: $(CLOJURE_SOURCES) ## Emacs tags table for the Clojure sources (rebuilt when they change)
+TAGS: $(CLOJURE_SOURCES) ## Emacs tags table for the Clojure sources (rebuilt when they change)
 	@etags --language=lisp -o $@ $(CLOJURE_SOURCES) && echo "$$(grep -c $$'\x7f' $@) tags in ./$@"
 
 agenda: ## List the TODO headings in the Org files with their deadlines (ALL=1 for done ones too)

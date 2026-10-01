@@ -109,8 +109,10 @@ Design choices worth keeping:
 13. **In a ctags regex bracket, `\n` is a backslash and an `n`**, so
     `[^ \t\n()]` truncated `openssl` to `ope`. Leave `\n` out.
 14. **`tags` and `TAGS` are one file on macOS's case-insensitive
-    filesystem.** Writing the Emacs format second overwrote the first. Only
-    `tags` is written.
+    filesystem.** Writing the Emacs format second overwrote the first. So the
+    ctags index is `.tags` (phony `gmake tags`) and the Emacs table is `TAGS`,
+    a real file target that depends on the sources and is built with `etags
+    --language=lisp` (etags has no Clojure parser).
 15. **macOS `grep` has no `-P`**, and `/usr/bin/make`, `/usr/bin/ctags` and
     `/usr/bin/git` are shims that fail without the Command Line Tools. Use
     `gmake`, the Homebrew `git`, and the Universal Ctags path the Makefile
