@@ -4,3 +4,8 @@
 db.edn
 .env
 .bin/
+# The reference shelf: other people's documents, fetched by `gmake resources`
+# for the versions installed here. Local, and never in history:
+# `gmake guard-resources` fails when any of it is tracked. No trailing slash,
+# because in a worktree it is a link to the main checkout's.
+/resources

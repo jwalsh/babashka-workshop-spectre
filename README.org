@@ -79,38 +79,73 @@ gmake status        # is the REPL live, and is it this checkout's
 
 ~gmake help~ prints this list. ~gmake~, not ~make~.
 
-| target               | does                                                                                            |
-|----------------------+-------------------------------------------------------------------------------------------------|
-| ~gmake help~         | the targets                                                                                     |
-| ~gmake .env~         | create ~.env~ from ~.env.template~; warns and leaves an existing one alone                      |
-| ~gmake deps~         | the workshop's dependencies and what is installed                                               |
-| ~gmake deps-emacs~   | exercise the Emacs packages in batch: installed and working, not what your session switched on  |
-| ~gmake todos~        | the TODO stubs with their forms; ~E=e3~ for one exercise, ~SRC=1~ without the tests             |
-| ~gmake namespaces~   | namespaces in load order with what each requires; ~NS=spectre.cli~ for one and what it loads    |
-| ~gmake agenda~       | the exercise headings with their deadlines; ~ALL=1~ includes the done ones                      |
-| ~gmake tags~         | symbol index in ~.tags~: every ~defn~, ~defn-~, ~def~, ~deftest~ and ~ns~ with its line         |
-| ~gmake TAGS~         | the Emacs tags table, rebuilt when a source file is newer                                       |
-| ~gmake status~       | is ~.nrepl-port~ live and this checkout's, is the tmux session up                               |
-| ~gmake demo~         | graphical Emacs, jacked in, ~FILE~ loaded; ~EMACS=~ picks another build                         |
-| ~gmake session~      | the same in a detached tmux session                                                             |
-| ~gmake session-shot~ | what that session's screen shows, as text                                                       |
-| ~gmake session-stop~ | stop it and its REPL                                                                            |
-| ~gmake nrepl~        | babashka nREPL on this checkout's fixed port                                                    |
-| ~gmake nrepl-jvm~    | the same code on JVM Clojure with cider-nrepl: apropos, jump to library source, debugger        |
-| ~gmake nrepl-stop~   | stop whichever of the two is on the fixed port                                                  |
-| ~gmake test~         | every required exercise's tests                                                                 |
-| ~gmake e1~           | E1: the ~spectre.core~ tests                                                                    |
-| ~gmake e2~           | E2: the clipboard, with a fake clipboard command only                                           |
-| ~gmake e2-clipboard~ | E2 including the test that writes your real clipboard, and restores it                          |
-| ~gmake e3~           | E3: ~db.edn~ load, save and merge                                                               |
-| ~gmake e4~           | E4: the ~pw~ CLI                                                                                |
-| ~gmake e5~           | E5: the charm.clj TUI, required TODOs                                                           |
-| ~gmake e5-optional~  | E5 including the optional ~figure-test~                                                         |
-| ~gmake e5-tui~       | the TUI with an nREPL inside it, for changing it while it runs; needs a real terminal           |
-| ~gmake e6~           | is a ~pw~ launcher on ~PATH~, and does it run from ~/~                                          |
-| ~gmake seed~         | add example sites to ~db.edn~; writes nothing before E3                                         |
-| ~gmake elisp~        | byte-compile, checkdoc and ERT for the Emacs wiring                                             |
-| ~gmake docs~         | check these documents against the code: targets, commands, links, and the walkthrough's results |
+| target                  | does                                                                                            |
+|-------------------------+-------------------------------------------------------------------------------------------------|
+| ~gmake help~            | the targets                                                                                     |
+| ~gmake .env~            | create ~.env~ from ~.env.template~; warns and leaves an existing one alone                      |
+| ~gmake deps~            | the workshop's dependencies and what is installed                                               |
+| ~gmake deps-emacs~      | exercise the Emacs packages in batch: installed and working, not what your session switched on  |
+| ~gmake todos~           | the TODO stubs with their forms; ~E=e3~ for one exercise, ~SRC=1~ without the tests             |
+| ~gmake namespaces~      | namespaces in load order with what each requires; ~NS=spectre.cli~ for one and what it loads    |
+| ~gmake agenda~          | the exercise headings with their deadlines; ~ALL=1~ includes the done ones                      |
+| ~gmake tags~            | symbol index in ~.tags~: every ~defn~, ~defn-~, ~def~, ~deftest~ and ~ns~ with its line         |
+| ~gmake TAGS~            | the Emacs tags table, rebuilt when a source file is newer                                       |
+| ~gmake resources~       | the manuals for the installed versions, into ~resources/~; ~LIST=1~, ~ONLY=id~, ~REFRESH=1~     |
+| ~gmake guard-resources~ | fail if anything under ~resources/~ is tracked, staged or in a local branch's history           |
+| ~gmake status~          | is ~.nrepl-port~ live and this checkout's, is the tmux session up                               |
+| ~gmake demo~            | graphical Emacs, jacked in, ~FILE~ loaded; ~EMACS=~ picks another build                         |
+| ~gmake session~         | the same in a detached tmux session                                                             |
+| ~gmake session-shot~    | what that session's screen shows, as text                                                       |
+| ~gmake session-stop~    | stop it and its REPL                                                                            |
+| ~gmake nrepl~           | babashka nREPL on this checkout's fixed port                                                    |
+| ~gmake nrepl-jvm~       | the same code on JVM Clojure with cider-nrepl: apropos, jump to library source, debugger        |
+| ~gmake nrepl-stop~      | stop whichever of the two is on the fixed port                                                  |
+| ~gmake test~            | every required exercise's tests                                                                 |
+| ~gmake e1~              | E1: the ~spectre.core~ tests                                                                    |
+| ~gmake e2~              | E2: the clipboard, with a fake clipboard command only                                           |
+| ~gmake e2-clipboard~    | E2 including the test that writes your real clipboard, and restores it                          |
+| ~gmake e3~              | E3: ~db.edn~ load, save and merge                                                               |
+| ~gmake e4~              | E4: the ~pw~ CLI                                                                                |
+| ~gmake e5~              | E5: the charm.clj TUI, required TODOs                                                           |
+| ~gmake e5-optional~     | E5 including the optional ~figure-test~                                                         |
+| ~gmake e5-tui~          | the TUI with an nREPL inside it, for changing it while it runs; needs a real terminal           |
+| ~gmake e6~              | is a ~pw~ launcher on ~PATH~, and does it run from ~/~                                          |
+| ~gmake seed~            | add example sites to ~db.edn~; writes nothing before E3                                         |
+| ~gmake elisp~           | byte-compile, checkdoc and ERT for the Emacs wiring                                             |
+| ~gmake docs~            | check these documents against the code: targets, commands, links, and the walkthrough's results |
+
+** The reference shelf
+
+~gmake resources~ fetches the manuals for what is installed here into ~resources/~, which git ignores: the API of the ~babashka.fs~ compiled into this ~bb~, the manual of the CIDER this Emacs loads, the Info files of this Emacs. [[file:dev/resources.edn][dev/resources.edn]] is the list. ~resources/INDEX.org~ says what was fetched, at which version, from where. A second run fetches only what has moved: a tool upgraded, or an entry edited.
+
+| for                               | read, under ~resources/~                                                                             |
+|-----------------------------------+------------------------------------------------------------------------------------------------------|
+| what ~core.clj~ implements (E1)   | ~spectre/spectre-algorithm.pdf~: the three phases on pages 3 to 5, scopes on 6, templates on 7 and 8 |
+| an ~fs/~ or ~p/~ call (E2, E3)    | ~babashka/fs/API.md~, ~babashka/process/API.md~: one heading for each function                       |
+| an option spec (E4)               | ~babashka/cli/API.md~ and its README                                                                 |
+| the TUI toolkit (E5)              | ~libraries/charm.clj/doc/~: guides, components, API, examples                                        |
+| a launcher (E6)                   | ~tools/bbin/~                                                                                        |
+| a ~clojure.core~ function in use  | ~clojure/clojuredocs/export.compact.edn~: the examples from ClojureDocs                              |
+| the language                      | ~clojure/site/reference/~ and ~clojure/site/guides/~; ~clojure/cheatsheet/~                          |
+| babashka itself                   | ~babashka/book/~; ~babashka/babashka/CHANGELOG.md~                                                   |
+| a CIDER key or command            | ~emacs/cider/~; ~platforms/babashka.adoc~ is what it does on babashka                                |
+| what an nREPL server answers      | ~nrepl/ops.adoc~; ~babashka/nrepl/README.md~ for babashka's                                          |
+| Emacs, Emacs Lisp, Org, Transient | ~emacs/info/~: the text ~C-h i~ shows, as files                                                      |
+| the tools                         | ~tools/~: clj-kondo, clojure-lsp, brepl, bbin, tmux, direnv                                          |
+
+Search it by naming it. ripgrep skips an ignored directory unless it is given one.
+
+#+begin_src sh :eval no
+rg -n 'name="babashka.fs/which"' resources/babashka/fs/API.md   # one function: read from that line
+rg -n 'cider-eval-last-sexp' resources/emacs/cider              # a command, across the CIDER manual
+bb -e '(-> (slurp "resources/clojure/clojuredocs/export.compact.edn") clojure.edn/read-string :clojure.core/merge-with :examples first println)'
+#+end_src
+
+The documents are other people's, so none of it is committed. ~gmake guard-resources~ fails when anything under ~resources/~ is tracked or in history: run it before a push. In a document, write a shelf path as code and not as a link; ~gmake docs~ refuses the link, which would work here and nowhere else.
+
+There is one shelf for the clone, in the main checkout. In a worktree ~gmake resources~ makes ~resources~ a link to it. A file of your own put there is left alone, and the index lists it apart.
+
+The CIDER, clojure-mode and lsp-mode entries are copied from the checkout the running Emacs loads each library from, which it is asked for. With no Emacs running they are kept as they are. A library that package.el installed has no manual beside it, and its entry is skipped.
 
 ** Emacs
 

@@ -31,10 +31,20 @@ tooling for working through it.
   by name. The one port file in the tree, `.nrepl-port`, is babashka's own:
   it writes it on start, removes it on exit, and `brepl` and CIDER look for
   it there. Do not add siblings to it.
+- **`resources/` is a local shelf of other people's documents, and is never
+  committed.** `gmake resources` fills it with the manuals for the versions
+  installed here. It is ignored; `gmake guard-resources` fails when any of it
+  is tracked, staged or in a local branch's history. Do not `git add -f`
+  from it, and do not copy a document out of it into a tracked file: quote a
+  line and say where it is. Name a shelf path in a document as code, never
+  as a link, which `gmake docs` refuses: a clone has no shelf. It is
+  documents and not allocation state, so the rule above does not send it to
+  `XDG_STATE_HOME`; what was fetched and when is recorded beside it, in
+  `resources/.index.edn`.
 - Conventional commits, co-author as a `--trailer`. Run `gmake elisp` and
   `clj-kondo --lint dev` before committing changes to the tooling, and
   `gmake docs` before committing changes to a document or to anything a
-  document names.
+  document names. Run `gmake guard-resources` before a push.
 
 ## Evaluate, do not guess
 
@@ -60,6 +70,15 @@ A claim about what the code does should come from running it.
   REPL. From the shell, `bb -e "(clojure.repl/doc babashka.fs/which)"`. In
   the user's REPL an alias such as `fs/` resolves only once the namespace
   that declares it has been loaded; a full name resolves at any time.
+- The manuals themselves are on the shelf, `resources/`, when `gmake
+  resources` has been run in this clone: `resources/INDEX.org` lists what is
+  there and for which version. It is the place for what a docstring does not
+  say: the options a library documents in its README, what a CIDER command
+  is bound to, what the Spectre algorithm specifies. `rg -n
+  'name="babashka.fs/which"' resources/babashka/fs/API.md` finds a function;
+  read from that line. Name the directory when searching: it is ignored, so
+  a search from the repo root, the Grep tool's included, passes over it.
+  `README.org` has the table of what to read for which exercise.
 - `emacsclient -e '(form)'` asks the running Emacs, when its init file
   starts the server: which modes are on in a buffer, what a key is bound to,
   the tail of `*Messages*`, the `*nrepl-messages ...*` log of what was
@@ -110,6 +129,7 @@ a question the files cannot, and each has a way to go wrong.
 | namespace graph | what loads what, in order | `gmake namespaces` | needs `clj-kondo` |
 | static analysis | references, callers, diagnostics | the LSP tool; `clojure-lsp references`, `diagnostics` | macros and dynamic calls it cannot see |
 | library docs | what a call takes and returns | LSP hover; `clojure.repl/doc` | an alias in a namespace the REPL has not loaded; a hover in the first minute of an LSP server, which can come back empty |
+| reference shelf | what the manual says, for the version installed | `resources/INDEX.org`, then `rg` with the directory named | no shelf in this clone until `gmake resources`; a search from the root skips it; a tool upgraded since the fetch (`gmake resources LIST=1` says `stale`) |
 | live REPL | what the code does | `brepl -e`, `.nrepl-port` | stale port, or a REPL from another checkout; a second REPL (`bb tui2 --nrepl`) that writes no port file |
 | editor screen | what the user is looking at | `gmake session-shot` | no tmux session (`gmake demo` has none); a selection drawn in inverse video does not show |
 | running editor | modes, key bindings, `*Messages*`, the nREPL message log | `emacsclient -e` | no server in that Emacs; a menu or prompt you open stays open |
@@ -130,6 +150,7 @@ reading, and say which one a claim came from.
 | exercise deadlines | `gmake agenda` |
 | one exercise's tests | `gmake e1` … `gmake e5` |
 | all required tests | `gmake test` |
+| the manual for an installed tool or library | `resources/INDEX.org`; `gmake resources` fetches, `LIST=1` only reports |
 | every target | `gmake help`; `README.org` has the same list with more words |
 | do the documents still match | `gmake docs` |
 

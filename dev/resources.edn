@@ -1,0 +1,263 @@
+;; The reference shelf: what `gmake resources` puts in resources/, which git
+;; ignores. Each entry is fetched for the version installed here, so the
+;; documents match the tools.
+;;
+;; :to is where it goes under resources/. Each entry owns its :to and is
+;; deleted and refetched whole, so no :to may be inside another's.
+;;
+;; :kind is how it is obtained:
+;;   :url           one file from a URL
+;;   :github-files  named files from a repository at a ref
+;;   :github-tree   directories or files out of a repository's tarball at a ref
+;;   :local-tree    a directory already on this machine, :from, copied
+;;   :emacs-library files beside an Emacs library, in the checkout the Emacs
+;;                  in use loads it from: the running one when it has a
+;;                  server, since an init file decides which copy that is
+;;   :emacs-info    Info manuals bundled with the Emacs that is first on PATH
+;;   :man           manual pages on this machine, as text
+;;
+;; For the tree and library kinds, :root is the directory the copy starts
+;; from (the repository's top when absent), :include the files and
+;; directories under it to take (everything when absent), and :extensions the
+;; kinds of file to keep (all when absent): images and build files are not
+;; documents.
+;;
+;; Nothing here names a path on anyone's machine. Where a thing is installed
+;; is asked of the tool that installed it.
+;;
+;; :version is how the installed version is found, and :ref how it becomes a
+;; tag. A branch name as :ref means the document has no versions; its head
+;; commit stands in for one, so it is refetched when it moves.
+;;   [:bb]                              this babashka
+;;   [:bb-dep babashka/fs]              a library inside this babashka
+;;   [:command-version "tool" "--version" "regex"]
+;;   [:git-describe "~/path/to/clone"]  a local clone's tag and commit
+;;   [:emacs-library "cider"]           the same, of the checkout Emacs loads
+;;                                      the library from
+;;   [:remote-head "owner/repo" "ref"]  a branch's commit on GitHub
+;;   [:etag "url"]                      what the server says identifies a file
+;;   [:literal "text"]
+[;; ---- the workshop's subject
+ {:id "spectre-algorithm"
+  :what "The Spectre algorithm, as its author publishes it"
+  :kind :url
+  :url "https://spectre.app/spectre-algorithm.pdf"
+  :to "spectre/spectre-algorithm.pdf"
+  :version [:etag "https://spectre.app/spectre-algorithm.pdf"]}
+
+ ;; ---- Clojure
+ {:id "clojure-site"
+  :what "clojure.org reference and guides, as AsciiDoc"
+  :kind :github-tree
+  :repo "clojure/clojure-site"
+  :ref "master"
+  :root "content"
+  :include ["reference" "guides"]
+  :extensions ["adoc"]
+  :to "clojure/site"
+  :version [:remote-head "clojure/clojure-site" "master"]}
+
+ {:id "clojure-cheatsheet"
+  :what "The Clojure cheatsheet, PDF"
+  :kind :github-files
+  :repo "jafingerhut/clojure-cheatsheets"
+  :ref "master"
+  :paths ["pdf/cheatsheet-usletter-color.pdf"]
+  :to "clojure/cheatsheet"
+  :version [:remote-head "jafingerhut/clojure-cheatsheets" "master"]}
+
+ ;; babashka's nREPL has no clojuredocs-lookup op, so the examples are not
+ ;; reachable from CIDER's doc menu here. This is the same data as a file.
+ {:id "clojuredocs"
+  :what "ClojureDocs export: the community examples for clojure.core and friends, as EDN"
+  :kind :github-files
+  :repo "clojure-emacs/clojuredocs-export-edn"
+  :ref "master"
+  :paths ["exports/export.compact.edn"]
+  :to "clojure/clojuredocs"
+  :version [:remote-head "clojure-emacs/clojuredocs-export-edn" "master"]}
+
+ ;; ---- babashka, and the libraries compiled into it
+ {:id "babashka"
+  :what "babashka README and CHANGELOG"
+  :kind :github-files
+  :repo "babashka/babashka"
+  :ref "v%s"
+  :paths ["README.md" "CHANGELOG.md"]
+  :to "babashka/babashka"
+  :version [:bb]}
+
+ {:id "babashka-book"
+  :what "The babashka book, as AsciiDoc"
+  :kind :github-tree
+  :repo "babashka/book"
+  :ref "master"
+  :root "src"
+  :extensions ["adoc" "clj"]
+  :to "babashka/book"
+  :version [:remote-head "babashka/book" "master"]}
+
+ {:id "babashka-fs"
+  :what "babashka.fs API and README (E2, E3)"
+  :kind :github-files
+  :repo "babashka/fs"
+  :ref "v%s"
+  :paths ["API.md" "README.md"]
+  :to "babashka/fs"
+  :version [:bb-dep babashka/fs]}
+
+ {:id "babashka-process"
+  :what "babashka.process API and README (E2)"
+  :kind :github-files
+  :repo "babashka/process"
+  :ref "v%s"
+  :paths ["API.md" "README.md"]
+  :to "babashka/process"
+  :version [:bb-dep babashka/process]}
+
+ {:id "babashka-cli"
+  :what "babashka.cli API and README (E4)"
+  :kind :github-files
+  :repo "babashka/cli"
+  :ref "v%s"
+  :paths ["API.md" "README.md"]
+  :to "babashka/cli"
+  :version [:bb-dep org.babashka/cli]}
+
+ {:id "babashka-nrepl"
+  :what "babashka.nrepl README: the requests babashka's nREPL answers"
+  :kind :github-files
+  :repo "babashka/babashka.nrepl"
+  :ref "master"
+  :paths ["README.md"]
+  :to "babashka/nrepl"
+  :version [:remote-head "babashka/babashka.nrepl" "master"]}
+
+ ;; ---- the workshop's own dependencies
+ {:id "charm"
+  :what "charm.clj, the TUI toolkit of E5: guides, components, API, examples"
+  :kind :github-tree
+  :repo "TimoKramer/charm.clj"
+  :ref "v%s"
+  :include ["README.md" "CHANGELOG.md" "doc"]
+  :extensions ["md" "clj" "edn" "txt"]
+  :to "libraries/charm.clj"
+  :version [:bb-dep de.timokramer/charm.clj]}
+
+ {:id "deflet"
+  :what "deflet README: the def-in-let the tests use"
+  :kind :github-files
+  :repo "borkdude/deflet"
+  :ref "main"
+  :paths ["README.md"]
+  :to "libraries/deflet"
+  :version [:remote-head "borkdude/deflet" "main"]}
+
+ {:id "test-runner"
+  :what "cognitect test-runner README: the flags of bb test"
+  :kind :github-files
+  :repo "cognitect-labs/test-runner"
+  :ref "v0.5.1"
+  :paths ["readme.md"]
+  :to "libraries/test-runner"
+  :version [:literal "0.5.1"]}
+
+ ;; ---- the REPL and the editor
+ {:id "nrepl"
+  :what "nREPL manual, as AsciiDoc: the protocol and its ops"
+  :kind :github-tree
+  :repo "nrepl/nrepl"
+  :ref "v%s"
+  :root "doc/modules/ROOT/pages"
+  :extensions ["adoc"]
+  :to "nrepl"
+  :version [:literal "1.7.0"]}
+
+ ;; These three need the library installed from a checkout of its repository.
+ ;; package.el installs the Lisp alone, and then there is no manual beside it.
+ {:id "cider"
+  :what "CIDER manual, as AsciiDoc, from the checkout Emacs loads CIDER from"
+  :kind :emacs-library
+  :library "cider"
+  :root "doc/modules/ROOT/pages"
+  :extensions ["adoc"]
+  :to "emacs/cider"
+  :version [:emacs-library "cider"]}
+
+ {:id "clojure-mode"
+  :what "clojure-mode README and CHANGELOG, from the checkout Emacs loads it from"
+  :kind :emacs-library
+  :library "clojure-mode"
+  :include ["README.md" "CHANGELOG.md"]
+  :to "emacs/clojure-mode"
+  :version [:emacs-library "clojure-mode"]}
+
+ {:id "lsp-mode-clojure"
+  :what "lsp-mode's Clojure guide, from the checkout Emacs loads lsp-mode from"
+  :kind :emacs-library
+  :library "lsp-mode"
+  :root "docs/tutorials"
+  :include ["clojure-guide.md"]
+  :to "emacs/lsp-mode"
+  :version [:emacs-library "lsp-mode"]}
+
+ {:id "emacs-info"
+  :what "Emacs, Emacs Lisp, Org, Transient, Flymake and ERT manuals, as Info"
+  :kind :emacs-info
+  :manuals ["emacs" "elisp" "org" "transient" "flymake" "ert"]
+  :to "emacs/info"
+  :version [:command-version "emacs" "--version" "[0-9][0-9.]+"]}
+
+ ;; ---- the tools around it
+ {:id "clj-kondo"
+  :what "clj-kondo docs: linters, configuration, hooks"
+  :kind :github-tree
+  :repo "clj-kondo/clj-kondo"
+  :ref "%s"
+  :include ["README.md" "doc"]
+  :extensions ["md" "txt"]
+  :to "tools/clj-kondo"
+  :version [:command-version "clj-kondo" "--version" "v[0-9][0-9.]+"]}
+
+ {:id "clojure-lsp"
+  :what "clojure-lsp docs: settings, features, the command line"
+  :kind :github-tree
+  :repo "clojure-lsp/clojure-lsp"
+  :ref "%s"
+  :root "docs"
+  :extensions ["md" "edn"]
+  :to "tools/clojure-lsp"
+  :version [:command-version "clojure-lsp" "--version" "[0-9]{4}\\.[0-9.]+-[0-9.]+"]}
+
+ {:id "brepl"
+  :what "brepl README: evaluating from a shell"
+  :kind :github-files
+  :repo "licht1stein/brepl"
+  :ref "v%s"
+  :paths ["README.md"]
+  :to "tools/brepl"
+  :version [:command-version "brepl" "--version" "[0-9][0-9.]+"]}
+
+ {:id "bbin"
+  :what "bbin README and docs: installing a launcher, for E6"
+  :kind :github-tree
+  :repo "babashka/bbin"
+  :ref "v%s"
+  :include ["README.md" "docs"]
+  :extensions ["md"]
+  :to "tools/bbin"
+  :version [:command-version "bbin" "--version" "[0-9][0-9.]+"]}
+
+ {:id "tmux"
+  :what "tmux manual page, as text"
+  :kind :man
+  :pages ["tmux"]
+  :to "tools/tmux.txt"
+  :version [:command-version "tmux" "-V" "[0-9][0-9.a-z]+"]}
+
+ {:id "direnv"
+  :what "direnv and direnv-stdlib manual pages, as text"
+  :kind :man
+  :pages ["direnv" "direnv-stdlib"]
+  :to "tools/direnv.txt"
+  :version [:command-version "direnv" "version" "[0-9][0-9.]+"]}]

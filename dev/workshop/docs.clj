@@ -11,7 +11,8 @@
      is in the wiring file's commentary and in `spectre-map`;
    - every Org and Markdown link, and every src/ test/ dev/ .meta/ path in
      code markup, points at something, including the text an Org search link
-     looks for;
+     looks for; and no link points into resources/, which only this machine
+     has;
    - every `form ;; => value` in walkthrough.org still evaluates to that value.
 
    Each problem is a `file:line: message` line, so it is a link in an Emacs
@@ -105,16 +106,29 @@
 (defn- squeeze [text]
   (str/replace text #"\s+" " "))
 
+(def ^:private shelf-link
+  "A link into resources/ works on the machine that ran `gmake resources` and
+   nowhere else: the shelf is ignored, so a clone does not have it."
+  "is a link into resources/, the local shelf a clone does not have: write the path as code")
+
 (defn- link-problems-in
-  "Problems with the links on one line of file."
+  "Problems with the links on one line of file. Each syntax is looked for
+   only in its own kind of file: an Org document that quotes a Markdown link
+   as an example has not made one."
   [file line text]
   (let [directory (or (fs/parent file) ".")
-        resolve-target #(fs/path directory %)]
+        resolve-target #(fs/path directory %)
+        on-shelf? #(fs/starts-with? (fs/normalize (resolve-target %)) "resources")
+        org? (str/ends-with? file ".org")
+        markdown? (str/ends-with? file ".md")]
     (concat
      ;; Org: [[file:path]] or [[file:path::search text]]
-     (for [[_ path search] (re-seq #"\[\[file:([^\]:]+)(?:::([^\]]+))?\]" text)
+     (for [[_ path search] (when org? (re-seq #"\[\[file:([^\]:]+)(?:::([^\]]+))?\]" text))
            :let [target (resolve-target path)]
            message [(cond
+                      (on-shelf? path)
+                      (str path " " shelf-link)
+
                       (not (fs/exists? target))
                       (str "link to " path ", which does not exist")
 
@@ -126,10 +140,16 @@
            :when message]
        (problem file line message))
      ;; Markdown: [text](relative/path)
-     (for [[_ path] (re-seq #"\]\(([^)#\s]+)\)" text)
+     (for [[_ path] (when markdown? (re-seq #"\]\(([^)#\s]+)\)" text))
            :when (not (re-find #"^[a-z]+:" path))
-           :when (not (fs/exists? (resolve-target path)))]
-       (problem file line (str "link to " path ", which does not exist"))))))
+           message [(cond
+                      (on-shelf? path)
+                      (str path " " shelf-link)
+
+                      (not (fs/exists? (resolve-target path)))
+                      (str "link to " path ", which does not exist"))]
+           :when message]
+       (problem file line message)))))
 
 (defn- path-problems-in
   "Problems with repo paths written as code on one line: `src/...` and the

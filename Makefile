@@ -16,10 +16,10 @@ SHELL := bash
 
 .DEFAULT_GOAL := help
 
-.PHONY: help FORCE demo session session-shot session-stop status tags deps deps-emacs todos agenda namespaces elisp docs test e1 e2 e2-clipboard e3 e4 e5 e5-optional e5-tui e6 seed nrepl nrepl-jvm nrepl-stop
+.PHONY: help FORCE demo session session-shot session-stop status tags deps deps-emacs todos agenda namespaces resources guard-resources elisp docs test e1 e2 e2-clipboard e3 e4 e5 e5-optional e5-tui e6 seed nrepl nrepl-jvm nrepl-stop
 
 help: ## Show available targets
-	@grep -E '^[a-zA-Z0-9_.-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-14s %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z0-9_.-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-16s %s\n", $$1, $$2}'
 
 # FORCE makes the recipe run even when .env exists, so it can say so. An
 # existing .env is never overwritten.
@@ -69,6 +69,28 @@ TAGS: $(CLOJURE_SOURCES) ## Emacs tags table for the Clojure sources (rebuilt wh
 
 agenda: ## List the TODO headings in the Org files with their deadlines (ALL=1 for done ones too)
 	@bb -cp dev -m workshop.agenda $(if $(ALL),--all)
+
+# The reference shelf: the manuals for the versions installed here, listed in
+# dev/resources.edn, written to resources/ with an INDEX.org. Ignored by git.
+# One per clone, in the main checkout; a worktree gets a link to it. Phony:
+# there is a directory of the same name. LIST=1 fetches nothing, ONLY=id takes
+# one entry, REFRESH=1 fetches again what is already there.
+resources: ## Fetch the manuals for the installed versions into resources/, ignored (LIST=1, ONLY=id, REFRESH=1)
+	@EMACS="$(EMACS)" bb -cp dev -m workshop.resources $(if $(LIST),--list) $(if $(ONLY),--only $(ONLY)) $(if $(REFRESH),--refresh)
+
+# Those documents are other people's and this repository is public. .gitignore
+# keeps them out of `git add .`; this is for `git add -f`, and for a commit
+# already made. Run it before a push.
+guard-resources: ## Fail if anything under resources/ is tracked, staged, or in a local branch's history
+	@tracked=$$(git ls-files -- resources | head -5); \
+	committed=$$(git log --branches --format='%h %s' -- resources | head -5); \
+	if [ -n "$$tracked$$committed" ]; then \
+	  echo "resources/ is the local shelf and is not for committing." >&2; \
+	  if [ -n "$$tracked" ]; then echo "in the index (git rm --cached takes them out):" >&2; echo "$$tracked" | sed 's/^/  /' >&2; fi; \
+	  if [ -n "$$committed" ]; then echo "in history:" >&2; echo "$$committed" | sed 's/^/  /' >&2; fi; \
+	  exit 1; \
+	fi; \
+	echo "guard-resources: nothing under resources/ is tracked, staged or in history"
 
 # One Emacs in a detached tmux session, jacked in with FILE loaded. You attach
 # to it; an agent reads it with session-shot and evaluates in the same REPL
