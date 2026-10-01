@@ -19,10 +19,12 @@
   "File stem to exercise, in the order of exercises.org."
   {"core" "E1" "clipboard" "E2" "db" "E3" "cli" "E4" "tui2" "E5"})
 
-(defn- exercise-of [file]
+(defn exercise-of
+  "The exercise a source file or its test belongs to, or nil: it is given."
+  [file]
   (get exercises (str/replace (fs/strip-ext (fs/file-name file)) #"_test$" "")))
 
-(defn- top-level-forms
+(defn top-level-forms
   "The top-level forms of source, each carrying :row and :end-row metadata.
    nil when the file does not parse, so one broken file hides nothing else."
   [source]

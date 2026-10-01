@@ -55,10 +55,11 @@
 (defn- named-targets
   "The [line target] pairs for each `gmake target` in file. Only code counts:
    after a backquote, tilde, quote or bracket, or at the start of a line, so
-   that 'run gmake through direnv' in a sentence is not a target."
+   that 'run gmake through direnv' in a sentence is not a target. Nor is a
+   flag: `gmake -p` names none."
   [file]
   (for [[line text] (numbered-lines file)
-        [_ target] (re-seq #"(?:^\s*(?:[#;]+\s*)?|[`~'(])gmake\s+([A-Za-z0-9_.-]+)" text)]
+        [_ target] (re-seq #"(?:^\s*(?:[#;]+\s*)?|[`~'(])gmake\s+([A-Za-z0-9_.][A-Za-z0-9_.-]*)" text)]
     [line target]))
 
 (defn- target-problems []

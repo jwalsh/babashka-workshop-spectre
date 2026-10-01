@@ -16,7 +16,7 @@ SHELL := bash
 
 .DEFAULT_GOAL := help
 
-.PHONY: help FORCE demo session session-shot session-stop status tags deps deps-emacs todos agenda namespaces resources guard-resources elisp docs test e1 e2 e2-clipboard e3 e4 e5 e5-optional e5-tui e6 seed nrepl nrepl-jvm nrepl-stop
+.PHONY: help FORCE demo session session-shot session-stop status tags deps deps-emacs todos agenda namespaces files blocks resources guard-resources elisp docs test e1 e2 e2-clipboard e3 e4 e5 e5-optional e5-tui e6 seed nrepl nrepl-jvm nrepl-stop
 
 help: ## Show available targets
 	@grep -E '^[a-zA-Z0-9_.-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-16s %s\n", $$1, $$2}'
@@ -47,8 +47,27 @@ deps-emacs: ## Exercise the Emacs packages: clojure-mode, paredit, CIDER jack-in
 todos: ## List the TODOs left in the exercises (E=e3 for one, SRC=1 to skip tests)
 	@bb -cp dev -m workshop.todos $(if $(E),--exercise $(E)) $(if $(SRC),--src-only)
 
-namespaces: ## Namespaces in load order with their requires (NS=spectre.cli for one and what it loads)
-	@bb -cp dev -m workshop.namespaces $(if $(NS),--from $(NS))
+# AS= writes the same graph another way: edn is the data, org a table,
+# mermaid a flowchart. PROGRESS=1 counts the TODOs left in each exercise,
+# LIBRARIES=1 draws the libraries in the flowchart.
+#
+# make predefines AS, the name of the assembler, so `$(if $(AS),...)' is
+# always true. Only an AS given on the command line or in the environment
+# is passed on.
+AS_GIVEN := $(if $(filter command% environment%,$(origin AS)),$(AS))
+
+namespaces: ## Namespaces in load order with their requires (NS=spectre.cli for one and what it loads; AS=edn, org or mermaid)
+	@bb -cp dev -m workshop.namespaces $(if $(NS),--from $(NS)) $(if $(AS_GIVEN),--as $(AS_GIVEN)) $(if $(PROGRESS),--progress) $(if $(LIBRARIES),--libraries)
+
+files: ## The files git tracks: whose each is, and what it says it is (AS=edn, org or mermaid)
+	@bb -cp dev -m workshop.files $(if $(AS_GIVEN),--as $(AS_GIVEN))
+
+# A part of an Org document that is built from the files is a dynamic block,
+# `#+BEGIN: workshop :view namespaces :as mermaid' to `#+END:'. This rewrites
+# what is between the two lines. FILES= names documents other than the Org
+# files at the top.
+blocks: ## Rebuild the parts of the Org documents that are built from the files (CHECK=1 only reports)
+	@bb -cp dev -m workshop.blocks $(if $(CHECK),--check) $(FILES)
 
 # The symbol index, in place of a code graph: nothing here parses Clojure for
 # one. Options are in .ctags.d/. Written to .tags, not tags: on a

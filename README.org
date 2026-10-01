@@ -87,6 +87,8 @@ gmake status        # is the REPL live, and is it this checkout's
 | ~gmake deps-emacs~      | exercise the Emacs packages in batch: installed and working, not what your session switched on  |
 | ~gmake todos~           | the TODO stubs with their forms; ~E=e3~ for one exercise, ~SRC=1~ without the tests             |
 | ~gmake namespaces~      | namespaces in load order with what each requires; ~NS=spectre.cli~ for one and what it loads    |
+| ~gmake files~           | the files git tracks: whose each is, and what it says it is                                     |
+| ~gmake blocks~          | rebuild the parts of the Org documents that are built from the files; ~CHECK=1~ only reports    |
 | ~gmake agenda~          | the exercise headings with their deadlines; ~ALL=1~ includes the done ones                      |
 | ~gmake tags~            | symbol index in ~.tags~: every ~defn~, ~defn-~, ~def~, ~deftest~ and ~ns~ with its line         |
 | ~gmake TAGS~            | the Emacs tags table, rebuilt when a source file is newer                                       |
@@ -113,6 +115,21 @@ gmake status        # is the REPL live, and is it this checkout's
 | ~gmake seed~            | add example sites to ~db.edn~; writes nothing before E3                                         |
 | ~gmake elisp~           | byte-compile, checkdoc and ERT for the Emacs wiring                                             |
 | ~gmake docs~            | check these documents against the code: targets, commands, links, and the walkthrough's results |
+
+** Parts built from the files
+
+Two things a document here keeps saying are in the files already: which files there are, and which namespace loads which. ~gmake files~ and ~gmake namespaces~ read them out, and ~AS=~ says how they are written: ~text~; ~edn~, the data the others are drawn from; ~org~, a table; ~mermaid~, a diagram.
+
+A part of an Org document that is built this way is a dynamic block, so the document says of itself what was written by hand and what was not:
+
+#+begin_example
+,#+BEGIN: workshop :view namespaces :as mermaid :from "spectre.cli spectre.tui2"
+,#+END:
+#+end_example
+
+~gmake blocks~ replaces what is between the two lines, in every Org file at the top of the repo. ~CHECK=1~ writes nothing and fails when a block is behind the files. ~:view~ is ~namespaces~ or ~files~, ~:as~ is one of the four, and the other parameters are that view's options. A file that Emacs holds with unsaved edits is left alone.
+
+This much is a scaffold. No document has such a block yet, and [[file:.meta/README.md][.meta/README.md]] has what is left to decide.
 
 ** The reference shelf
 

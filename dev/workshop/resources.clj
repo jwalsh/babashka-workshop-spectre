@@ -27,7 +27,8 @@
    [babashka.process :as p]
    [clojure.edn :as edn]
    [clojure.java.io :as io]
-   [clojure.string :as str])
+   [clojure.string :as str]
+   [workshop.org :as org])
   (:import
    (java.lang ProcessHandle)
    (java.time LocalDate)
@@ -468,15 +469,6 @@
      {}
      state)))
 
-(defn- org-table
-  "Rows of strings as an aligned Org table, the first row its header."
-  [[header & rows]]
-  (let [widths (apply map (fn [& cells] (apply max (map count cells))) header rows)
-        line (fn [cells]
-               (str "| " (str/join " | " (map #(format (str "%-" %1 "s") %2) widths cells)) " |"))
-        rule (str "|-" (str/join "-+-" (map #(str/join (repeat % "-")) widths)) "-|")]
-    (str/join "\n" (concat [(line header) rule] (map line rows)))))
-
 (defn- strays
   "Top-level things on the shelf that no entry put there: yours."
   [entries]
@@ -508,7 +500,7 @@
                "it was fetched. How to search it is in the README, under The reference shelf.\n\n"
                "Local copies of other people's documents, for reading. ~resources/~ is ignored\n"
                "by git, and ~gmake guard-resources~ fails when any of it is tracked.\n\n"
-               (org-table (cons ["where" "what" "version" "files" "size" "from" "fetched"] on-shelf))
+               (org/table (cons ["where" "what" "version" "files" "size" "from" "fetched"] on-shelf))
                "\n"
                (when (seq absent)
                  (str "\nIn the manifest and not on the shelf:\n\n" (str/join "\n" absent) "\n"))
