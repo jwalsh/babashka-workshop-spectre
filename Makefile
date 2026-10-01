@@ -16,7 +16,7 @@ SHELL := bash
 
 .DEFAULT_GOAL := help
 
-.PHONY: help FORCE demo session session-shot session-stop status tags deps deps-emacs todos agenda namespaces elisp test e1 e2 e2-clipboard e3 e4 e5 e5-optional e5-tui e6 seed nrepl nrepl-jvm nrepl-stop
+.PHONY: help FORCE demo session session-shot session-stop status tags deps deps-emacs todos agenda namespaces elisp docs test e1 e2 e2-clipboard e3 e4 e5 e5-optional e5-tui e6 seed nrepl nrepl-jvm nrepl-stop
 
 help: ## Show available targets
 	@grep -E '^[a-zA-Z0-9_.-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-14s %s\n", $$1, $$2}'
@@ -108,6 +108,12 @@ elisp: ## Byte-compile, checkdoc and ERT for the Emacs wiring
 	@rm -f babashka-workshop-spectre.elc
 	@$(EMACS_BATCH) --eval '(checkdoc-file "babashka-workshop-spectre.el")' 2>&1 | grep -B1 -E '^babashka-workshop-spectre.el:' && exit 1 || echo "checkdoc: clean"
 	@$(EMACS_BATCH) -l babashka-workshop-spectre-test.el -f ert-run-tests-batch-and-exit
+
+# What a document says and the code does, where that can be compared without
+# reading prose. src is on the classpath because the walkthrough's results are
+# checked by evaluating them.
+docs: ## Check the documents against the code: targets, commands, links, the walkthrough's results
+	@bb -cp dev:src -m workshop.docs
 
 test: ## All required exercises (no :optional, no real clipboard)
 	bb test --excludes :optional --excludes :clipboard
