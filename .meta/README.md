@@ -122,8 +122,9 @@ own state, logs, hooks, a language server.
   they wrap were run: `gmake nrepl`, `gmake nrepl-jvm`, and a redefinition
   inside a running `bb tui2 --nrepl` over `brepl -p 1667`.
 - Two checkouts jacked in side by side in one Emacs.
-- Flymake underlines in a file that has warnings (only a clean file was
-  checked live), and whether the mode line counts them.
+- Whether the mode line counts Flymake's findings. The findings themselves
+  were seen in the owner's Emacs on 2026-10-01: clj-kondo's type mismatch on
+  a bare keyword passed to `derive` showed in the buffer.
 - `gmake demo` on anything but the macOS build it was written on.
 - `gmake e2-clipboard`, deliberately.
 - E6: that a bbin launcher installed into `.bin` is off `PATH` outside the
