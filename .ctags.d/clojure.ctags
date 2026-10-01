@@ -1,0 +1,12 @@
+# Universal Ctags options for this repo, loaded automatically from .ctags.d/.
+# The built-in Clojure parser tags only `defn` and `ns` (kinds f and n; see
+# ctags-lang-clojure(7)). The stubs to fill in are mostly `defn`, but the
+# helpers around them are `defn-`, `def` and `deftest`, so those are added.
+--languages=Clojure
+--fields=+nKS
+--kinddef-Clojure=p,private,private functions
+--kinddef-Clojure=v,var,vars
+--kinddef-Clojure=t,test,tests
+--regex-Clojure=/^\(defn-[ \t]+(\^[^ \t]+[ \t]+)*([^ \t()]+)/\2/p/
+--regex-Clojure=/^\(def[ \t]+(\^[^ \t]+[ \t]+)*([^ \t()]+)/\2/v/
+--regex-Clojure=/^\(deftest[ \t]+(\^[^ \t]+[ \t]+)*([^ \t()]+)/\2/t/
