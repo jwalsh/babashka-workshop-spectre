@@ -89,6 +89,7 @@ gmake status        # is the REPL live, and is it this checkout's
 | ~gmake namespaces~      | namespaces in load order with what each requires; ~NS=spectre.cli~ for one and what it loads    |
 | ~gmake files~           | the files git tracks: whose each is, and what it says it is                                     |
 | ~gmake blocks~          | rebuild the parts of the Org documents that are built from the files; ~CHECK=1~ only reports    |
+| ~gmake draw~            | draw the namespaces with mermaid-cli, or the file tree with ~VIEW=files~; ~OUT=~ is the image   |
 | ~gmake agenda~          | the exercise headings with their deadlines; ~ALL=1~ includes the done ones                      |
 | ~gmake tags~            | symbol index in ~.tags~: every ~defn~, ~defn-~, ~def~, ~deftest~ and ~ns~ with its line         |
 | ~gmake TAGS~            | the Emacs tags table, rebuilt when a source file is newer                                       |
@@ -128,6 +129,15 @@ A part of an Org document that is built this way is a dynamic block, so the docu
 #+end_example
 
 ~gmake blocks~ replaces what is between the two lines, in every Org file at the top of the repo. ~CHECK=1~ writes nothing and fails when a block is behind the files. ~:view~ is ~namespaces~ or ~files~, ~:as~ is one of the four, and the other parameters are that view's options. A file that Emacs holds with unsaved edits is left alone.
+
+To look at one without putting it anywhere, ~gmake draw~ pipes a view through mermaid-cli. The extension of ~OUT~ picks the image, and the view's options pass through:
+
+#+begin_src sh :eval no
+gmake draw OUT=~/Desktop/namespaces.png NS="spectre.cli spectre.tui2" PROGRESS=1
+gmake draw OUT=~/Desktop/files.svg VIEW=files
+#+end_src
+
+~mmdc~ starts a browser and has to be told which. The target hands it ~puppeteer/config.json~ from your configuration directory when there is one, and ~PUPPETEER_CONFIG=~ names another. A block is drawn from inside Emacs by ~ob-mermaid~ when its first line also gives ~:file~ and ~:puppeteer-config-file~.
 
 This much is a scaffold. No document has such a block yet, and [[file:.meta/README.md][.meta/README.md]] has what is left to decide.
 

@@ -66,7 +66,7 @@
    Throws, with the reason, when there is nothing to write. Remembered for
    the run: a check and a rewrite ask for the same views."
   (memoize
-   (fn [{:keys [view file] :as parameters}]
+   (fn [{:keys [view] :as parameters}]
      (let [{:keys [write formats]}
            (or (views view)
                (throw (ex-info (str "names no view: :view is one of " (str/join ", " (sort (keys views)))) {})))
@@ -81,8 +81,16 @@
                 :org text
                 :text (org/example-block text)
                 :edn (org/src-block "clojure" ":eval no" text)
-                ;; with :file, ob-mermaid can draw it from inside Emacs
-                :mermaid (org/src-block "mermaid" (when file (str ":file " file)) text))))))))
+                ;; These two go on to ob-mermaid, which draws the block from
+                ;; inside Emacs: it needs :file, and passes mmdc a puppeteer
+                ;; config only when the block names one.
+                :mermaid (org/src-block "mermaid"
+                                        (not-empty
+                                         (str/join " " (for [header [:file :puppeteer-config-file]
+                                                             :let [value (get parameters header)]
+                                                             :when value]
+                                                         (str header " " value))))
+                                        text))))))))
 
 ;;;; the blocks of a document
 
@@ -181,7 +189,8 @@
    :direction {:desc "With --emit, for namespaces as mermaid: LR, TD, RL or BT"}
    :upstream {:desc "With --emit, for files: the branch whose files are the workshop's"}
    :collapse {:desc "With --emit, for files: directories to list as one entry"}
-   :file {:desc "With --emit, as mermaid: the image ob-mermaid would draw"}})
+   :file {:desc "With --emit, as mermaid: the image ob-mermaid would draw"}
+   :puppeteer-config-file {:desc "With --emit, as mermaid: the file that tells mmdc which browser"}})
 
 (defn- documents
   "The Org files at the top of the repo."

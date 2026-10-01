@@ -16,7 +16,7 @@ SHELL := bash
 
 .DEFAULT_GOAL := help
 
-.PHONY: help FORCE demo session session-shot session-stop status tags deps deps-emacs todos agenda namespaces files blocks resources guard-resources elisp docs test e1 e2 e2-clipboard e3 e4 e5 e5-optional e5-tui e6 seed nrepl nrepl-jvm nrepl-stop
+.PHONY: help FORCE demo session session-shot session-stop status tags deps deps-emacs todos agenda namespaces files blocks draw resources guard-resources elisp docs test e1 e2 e2-clipboard e3 e4 e5 e5-optional e5-tui e6 seed nrepl nrepl-jvm nrepl-stop
 
 help: ## Show available targets
 	@grep -E '^[a-zA-Z0-9_.-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-16s %s\n", $$1, $$2}'
@@ -56,11 +56,15 @@ todos: ## List the TODOs left in the exercises (E=e3 for one, SRC=1 to skip test
 # is passed on.
 AS_GIVEN := $(if $(filter command% environment%,$(origin AS)),$(AS))
 
+# The two views as commands, less --as: `draw' below runs them too.
+NAMESPACES = bb -cp dev -m workshop.namespaces $(if $(NS),--from $(NS)) $(if $(PROGRESS),--progress) $(if $(LIBRARIES),--libraries)
+FILES_LIST = bb -cp dev -m workshop.files
+
 namespaces: ## Namespaces in load order with their requires (NS=spectre.cli for one and what it loads; AS=edn, org or mermaid)
-	@bb -cp dev -m workshop.namespaces $(if $(NS),--from $(NS)) $(if $(AS_GIVEN),--as $(AS_GIVEN)) $(if $(PROGRESS),--progress) $(if $(LIBRARIES),--libraries)
+	@$(NAMESPACES) $(if $(AS_GIVEN),--as $(AS_GIVEN))
 
 files: ## The files git tracks: whose each is, and what it says it is (AS=edn, org or mermaid)
-	@bb -cp dev -m workshop.files $(if $(AS_GIVEN),--as $(AS_GIVEN))
+	@$(FILES_LIST) $(if $(AS_GIVEN),--as $(AS_GIVEN))
 
 # A part of an Org document that is built from the files is a dynamic block,
 # `#+BEGIN: workshop :view namespaces :as mermaid' to `#+END:'. This rewrites
@@ -68,6 +72,25 @@ files: ## The files git tracks: whose each is, and what it says it is (AS=edn, o
 # files at the top.
 blocks: ## Rebuild the parts of the Org documents that are built from the files (CHECK=1 only reports)
 	@bb -cp dev -m workshop.blocks $(if $(CHECK),--check) $(FILES)
+
+# mermaid-cli starts a browser and has to be told which: left to itself it
+# looks for one Chromium that puppeteer may never have downloaded. The file
+# is JSON, {"executablePath": "..."}. PUPPETEER_CONFIG= names another.
+PUPPETEER_CONFIG ?= $(wildcard $(or $(XDG_CONFIG_HOME),$(HOME)/.config)/puppeteer/config.json)
+
+# The view's own options pass through: NS=, PROGRESS=1, LIBRARIES=1. The
+# extension of OUT picks the image: png, svg or pdf. zsh does not expand the
+# ~ in OUT=~/Desktop/x.png, so that is done here. The view is run directly
+# and not through $(MAKE): make runs a line that has $(MAKE) in it even
+# under -n, and a dry run that draws is not one.
+draw: ## Draw the namespaces with mermaid-cli, or the file tree with VIEW=files (OUT=~/Desktop/namespaces.png)
+	@test -n "$(OUT)" || { echo "gmake draw OUT=image.png (or .svg, .pdf); VIEW=files draws the file tree" >&2; exit 1; }
+	@test -z "$(filter-out namespaces files,$(VIEW))" || { echo "VIEW is namespaces, the default, or files" >&2; exit 1; }
+	@command -v mmdc >/dev/null || { echo "mmdc is not on PATH: it is mermaid-cli, @mermaid-js/mermaid-cli" >&2; exit 1; }
+	@set -o pipefail; out="$(OUT)"; out="$${out/#\~/$$HOME}"; \
+	$(if $(filter files,$(VIEW)),$(FILES_LIST),$(NAMESPACES)) --as mermaid \
+	  | mmdc -q -i - -o "$$out" $(if $(PUPPETEER_CONFIG),--puppeteerConfigFile "$(PUPPETEER_CONFIG)") \
+	  && echo "drew $$out"
 
 # The symbol index, in place of a code graph: nothing here parses Clojure for
 # one. Options are in .ctags.d/. Written to .tags, not tags: on a
