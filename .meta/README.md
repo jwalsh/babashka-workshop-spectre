@@ -18,7 +18,7 @@ fill in stubs. The password tool is the vehicle. The subject is the method,
 and what an agent can read besides files: a shared live REPL, the editor's
 own state, logs, hooks, a language server.
 
-## Where things stand (2026-09-30)
+## Where things stand (2026-10-01)
 
 - `main` carries the tooling and is the base. `src/` and `test/` match
   upstream's `main` except for exploration forms in the `comment` blocks of
@@ -37,6 +37,14 @@ own state, logs, hooks, a language server.
 - Hooks in `.claude/settings.json`: session status on start; delimiter
   repair and cljfmt around every Write and Edit. The clojure-lsp plugin
   under `dev/claude-plugins/` is installed at user scope on this machine.
+- `gmake resources` fills `resources/` with the manuals for the versions
+  installed here: the Spectre algorithm paper, the babashka book and the
+  APIs of the libraries inside `bb`, clojure.org's reference, ClojureDocs'
+  examples, the CIDER and nREPL manuals, Emacs's Info files, and the tools'
+  docs. 24 entries in `dev/resources.edn`, about 17 MB, ignored by git, one
+  shelf for the clone. `resources/INDEX.org` lists what is there; a clone
+  has none until the target is run. `README.org` says what to read for
+  which exercise, and `gmake guard-resources` is the check before a push.
 
 ## Open
 
@@ -49,7 +57,15 @@ own state, logs, hooks, a language server.
   such as `C-c s` is the owner's to choose.
 - `.tags`, `TAGS` and `worktrees/` are ignored through `.git/info/exclude`,
   which a fresh clone does not have: there `gmake tags` leaves untracked
-  files. `.gitignore` already carries `.env` and `.bin/`.
+  files. `.gitignore` already carries `.env`, `.bin/` and `/resources`.
+- `exercises.org` does not mention the shelf. Its *Documentation for a call*
+  table is where the pointer belongs, and the file was open in Emacs when
+  the shelf was added, so it was left alone. `README.org` has the table of
+  what to read for which exercise meanwhile.
+- The shelf has no paredit entry: the package ships no manual, only the
+  commentary in `paredit.el`.
+- `gmake guard-resources` is run by hand. Nothing runs it before a commit or
+  a push.
 - The Remember plugin keeps its history in `.remember/` in the checkout,
   ignoring itself. The no-state-in-the-repo rule in `AGENTS.md` predates it.
 - clj-kondo on PATH is 2024.11.14; current is 2026.08.04. The newer one
@@ -80,3 +96,12 @@ own state, logs, hooks, a language server.
   checkout, and that `gmake e6` passes anyway. Reasoned from direnv, not run.
 - `/plugin marketplace add` typed inside a Claude Code session.
 - Links in the `*spectre-todos*` buffer jumping.
+- `gmake resources` anywhere but this machine. The Info manuals are found by
+  asking Emacs, and the manual pages by `man`, so neither path is assumed;
+  no other system has run it. Faults were planted for a missing tag, file,
+  host, manual and page, not for a machine that is offline.
+- `gmake resources EMACS=...` naming a second build of Emacs. There is one
+  build here: the override was run with that build's own binary, and with a
+  path that does not exist, which leaves the Info entry `kept`.
+- Reading a shelf copy of an Info manual inside Emacs (`C-u C-h i`). The
+  files were checked as text.

@@ -68,6 +68,18 @@ order is not by number. Each was hit, not reasoned to.
     stops reporting them unused, and stops reporting `tools` unused. The
     underlines are not a count of what is left. `gmake todos` and the tests
     are.
+46. **Which copy of a library is loaded decides which manual is right, and a
+    batch Emacs does not know.** Asked where `cider.el` is, a batch Emacs
+    with package.el's packages named one copy, and the running Emacs another:
+    a git checkout its init file puts first. Only the checkout has the manual
+    beside it; package.el installs the Lisp alone. So `gmake resources` asks
+    the running Emacs, with a `locate-library` that only reads, and when none
+    answers it keeps what is on the shelf instead of fetching for the other
+    copy. Finding 19 again, for documents.
+47. **A search that respects ignores does not see the shelf.** `rg` from the
+    repo root for a string in `resources/babashka/fs/API.md` listed two
+    documents and nothing under `resources/`. With the directory named it
+    found the line. The Grep tool is the same program.
 
 ## Environment
 
@@ -132,6 +144,13 @@ order is not by number. Each was hit, not reasoned to.
     the menu has that entry, not because it works on babashka. `gmake docs`
     now checks what can be checked mechanically: targets, commands, links
     and the walkthrough's results.
+45. **A manifest that names a path works on the machine that wrote it.** The
+    first `dev/resources.edn` gave the directory one Emacs package manager
+    keeps its checkouts in, and fetched all 24 entries. In a public repo that
+    is a detail of one person's setup, and for anyone else three entries that
+    are never found. Nothing in the manifest names a path now: where a thing
+    is installed is asked of what installed it (`bb print-deps`, the tool's
+    `--version`, Emacs's `locate-library`).
 
 ## Observing a TUI through tmux
 
@@ -175,3 +194,14 @@ order is not by number. Each was hit, not reasoned to.
     marketplace added from a shell was not found by `/plugin install` in a
     session already running. `dev/claude-plugins/plugins/clojure-lsp/README.md`
     has the route that worked.
+43. **zsh does not split an unquoted variable into words.** A loop over
+    `"owner/repo ref"` pairs with `set -- $pair` left the pair whole in `$1`,
+    and curl answered `000` to seven malformed URLs. That read as the host
+    being down. One URL typed out showed it was up. A `bb` script, which the
+    rules already ask for, has no word splitting to get wrong.
+44. **A cell of an Org table cannot hold a `|`.** The first
+    `resources/INDEX.org` put a shell pipeline in its "from" column and those
+    rows came out with extra columns. Taking the shell out of the manifest
+    fixed it and something else with it: a data file no longer runs commands.
+    Manual pages are a kind of their own, and the overstriking `col -b`
+    removed is one regex.
