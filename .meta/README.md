@@ -72,10 +72,15 @@ own state, logs, hooks, a language server.
   5. A third view, who calls an exercise's stubs, from clj-kondo's var
      usages: the maps under E2 to E4 in `exercises.org` are that, made by
      hand, with notes beside them that no file holds.
-  6. Drawing. `mmdc` here cannot start its browser (finding 50), which
-     `ob-mermaid` would hit too. A block takes `:file` for the image; where
-     images would live is not decided. GitHub shows Mermaid in an Org file
-     as source.
+  6. Images. `gmake draw` pipes a view through `mmdc` to wherever `OUT`
+     says, handing it the puppeteer config it needs to find a browser
+     (finding 50). A block is drawn from inside Emacs when its first line
+     gives `:file` and `:puppeteer-config-file`; `ob-mermaid` then puts its
+     `#+RESULTS:` link inside the block, where `CHECK=1` calls the block
+     behind and the next `gmake blocks` takes the link out. So whether
+     images are kept, and where, is undecided, and until it is a block
+     cannot be both drawn in place and checked. GitHub shows Mermaid in an
+     Org file as source.
 
 - `gmake deps-emacs` runs in batch and reports `ok` for things a real
   session does not have. See findings 17 to 19. The check that answers is
@@ -141,5 +146,6 @@ own state, logs, hooks, a language server.
   it asks with was run read-only against the running one and answered
   rightly for a modified, an open and an unopened file; the refusal itself
   was run against a stand-in for `emacsclient`.
-- A generated Mermaid block drawn inside Emacs, or by anything but `mmdc`
-  pointed at a browser by hand.
+- A generated Mermaid block drawn in the Emacs someone is sitting in. One
+  was drawn by `ob-mermaid` in a batch Emacs with no init file, and the
+  views by `gmake draw`.

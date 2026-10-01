@@ -219,8 +219,18 @@ order is not by number. Each was hit, not reasoned to.
     passed. Only an `AS` whose `$(origin AS)` is the command line or the
     environment is passed on now. `gmake -p -f /dev/null` lists what else is
     taken; no other option name used here is.
-50. **mermaid-cli could not draw until it was told which browser.** `mmdc`
-    wanted one Chromium revision and the puppeteer cache held others. A
-    file naming one of those, passed with `-p`, drew every diagram, which is
-    how the generated Mermaid was checked. `ob-mermaid` runs the same
-    `mmdc`.
+50. **A tool that fails without its configuration is not broken.** `mmdc`
+    alone could not start a browser: it wanted one Chromium revision and the
+    puppeteer cache held others. A config was written for it in scratch, the
+    diagrams were drawn, and it went on record here as unable to draw as
+    installed. It was able all along. A puppeteer config already sat in the
+    configuration directory, and `--puppeteerConfigFile` is how it gets
+    used; the owner had to run it to show that. Look for the configuration
+    before the verdict. `gmake draw` passes that file. `ob-mermaid` passes
+    one only when the block names it with `:puppeteer-config-file`, which
+    was run both ways in a batch Emacs.
+51. **A recipe line that names `$(MAKE)` runs under `-n`.** `gmake -n draw`
+    was meant to print. make runs such a line even then, so that a sub-make
+    can print its own, and this one went on to pipe into `mmdc`: the dry run
+    started a browser, and would have written the image had what it was fed
+    been a diagram. The view is run directly now, and the dry run prints.
