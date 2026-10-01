@@ -83,6 +83,13 @@ else the 1667 both commands default to."
 ;; they would prompt on every file.
 (setq cider-repl-display-help-banner nil)
 
+;; CIDER's doc and eval menus (C-c C-d, C-c C-v) are transients, and opening
+;; one makes Emacs native-compile a trampoline for `recursive-edit'.  Where
+;; libgccjit cannot run its compiler driver that fails, and the menu never
+;; appears.  Trampolines are only an optimisation: go without them.
+(defvar native-comp-enable-subr-trampolines)
+(setq native-comp-enable-subr-trampolines nil)
+
 ;; Keep every request and response in *nrepl-messages ...*.  An evaluation
 ;; from a source buffer leaves nothing in the REPL buffer, so without this
 ;; the only record of what was evaluated is the `=> value' lines in

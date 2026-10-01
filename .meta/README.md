@@ -39,9 +39,9 @@ own state, logs, hooks.
   `emacsclient -e` against the running Emacs; no target wraps it yet.
 - `gmake session-shot` is `tmux capture-pane -p`, which drops the inverse
   video the TUIs mark a selection with. It needs `-e`.
-- The `C-c C-v` eval menu errors in an Emacs with a broken libgccjit
-  (finding 8). Setting `native-comp-enable-subr-trampolines` to nil in the
-  wiring file is the likely fix; not applied.
+- Claude Code's LSP tool has no server for `.clj`. A local plugin that runs
+  `clojure-lsp` is written under `dev/claude-plugins/` and not yet installed;
+  its README lists what is unknown until it is.
 - clj-kondo on PATH is 2024.11.14; current is 2026.08.04.
 - Java on the shell's PATH is 21; the FFI scrypt path needs 22+.
 - `walkthrough.org` covers `core.clj` only.

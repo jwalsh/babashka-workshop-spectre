@@ -26,9 +26,13 @@ last. Each was hit, not reasoned to.
 7. **An evaluation from a source buffer leaves nothing in the REPL buffer.**
    Only `=> value` in `*Messages*`, without the form. `nrepl-log-messages` is
    now on, which keeps form, namespace, value and time, in memory.
-8. **Native compilation can be broken** (`libgccjit`). Batch runs set
-   `native-comp-enable-subr-trampolines` to nil; a live session without it
-   fails on transient menus, CIDER's `C-c C-v` among them.
+8. **Native compilation can be broken** (`libgccjit`), and then CIDER's
+   transient menus never open: `C-c C-d` (docs) and `C-c C-v` (eval) both
+   need a trampoline for `recursive-edit`. The same `transient-setup` call
+   failed with trampolines on and opened with them off, so the wiring file
+   now sets `native-comp-enable-subr-trampolines` to nil, as the batch runs
+   already did. Documentation itself was never the problem: babashka's nREPL
+   answers `info`, `lookup` and `eldoc`.
 9. **A bare `-l name.el` is not found by a graphical Emacs once a long init
    has run.** `gmake demo` passes absolute paths.
 10. **`bb tui2 --nrepl` is a second REPL**, and it writes no `.nrepl-port`.
