@@ -1,0 +1,35 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "spectre-workshop",
+  "description": "Local Claude Code plugins for working this checkout",
+  "owner": {
+    "name": "jwalsh"
+  },
+  "plugins": [
+    {
+      "name": "clojure-lsp",
+      "description": "Clojure language server (clojure-lsp) for code intelligence",
+      "version": "0.1.0",
+      "author": {
+        "name": "jwalsh"
+      },
+      "source": "./plugins/clojure-lsp",
+      "category": "development",
+      "strict": false,
+      "lspServers": {
+        "clojure-lsp": {
+          "command": "clojure-lsp",
+          "args": ["listen"],
+          "extensionToLanguage": {
+            ".clj": "clojure",
+            ".cljc": "clojure",
+            ".cljs": "clojurescript",
+            ".bb": "clojure",
+            ".edn": "clojure"
+          },
+          "startupTimeout": 120000
+        }
+      }
+    }
+  ]
+}
