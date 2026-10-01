@@ -2,11 +2,13 @@ NREPL_PORT ?= 1667
 # tmux session for this checkout: spectre in the main one, spectre-<dir> in a worktree
 SESSION    ?= spectre$(if $(wildcard .git/HEAD),,-$(notdir $(CURDIR)))
 FILE       ?= src/spectre/core.clj
+# Universal Ctags. macOS's /usr/bin/ctags is a different program with no Clojure parser.
+CTAGS      ?= $(firstword $(wildcard /opt/homebrew/opt/universal-ctags/bin/ctags /usr/local/opt/universal-ctags/bin/ctags) ctags)
 SHELL := bash
 
 .DEFAULT_GOAL := help
 
-.PHONY: help FORCE session session-shot session-stop deps deps-emacs todos agenda namespaces elisp test e1 e2 e2-clipboard e3 e4 e5 e5-optional e5-tui e6 seed nrepl nrepl-jvm nrepl-stop
+.PHONY: help FORCE session session-shot session-stop status tags deps deps-emacs todos agenda namespaces elisp test e1 e2 e2-clipboard e3 e4 e5 e5-optional e5-tui e6 seed nrepl nrepl-jvm nrepl-stop
 
 help: ## Show available targets
 	@grep -E '^[a-zA-Z0-9_.-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-14s %s\n", $$1, $$2}'
@@ -40,6 +42,12 @@ todos: ## List the TODOs left in the exercises (E=e3 for one, SRC=1 to skip test
 namespaces: ## Namespaces in load order with their requires (NS=spectre.cli for one and what it loads)
 	@bb -cp dev -m workshop.namespaces $(if $(NS),--from $(NS))
 
+# The symbol index, in place of a code graph: nothing here parses Clojure for
+# one. Options are in .ctags.d/. tags is for grep, readtags and vi; TAGS is
+# the Emacs format. Both are ignored locally.
+tags: ## Symbol index with Universal Ctags: every defn, defn-, def, deftest and ns with its line
+	@$(CTAGS) -R -f tags src test dev && $(CTAGS) -R -e -f TAGS src test dev && echo "$$(grep -vc '^!' tags) tags in ./tags and ./TAGS"
+
 agenda: ## List the TODO headings in the Org files with their deadlines (ALL=1 for done ones too)
 	@bb -cp dev -m workshop.agenda $(if $(ALL),--all)
 
@@ -58,6 +66,9 @@ session-shot: ## Print what the session's screen shows right now
 
 session-stop: ## Stop the session and its REPL
 	@tmux kill-session -t $(SESSION) 2>/dev/null && echo "stopped $(SESSION)" || echo "no session $(SESSION)"
+
+status: ## Is the REPL live and this checkout's, is the tmux session up (also the SessionStart hook)
+	@bb dev/session-status.bb
 
 # Native-comp trampolines are off: package-lint advises `message', and a
 # broken libgccjit should not fail a lint run.

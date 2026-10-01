@@ -36,6 +36,17 @@ A claim about what the code does should come from running it.
   one-off.
 - `clojure-lsp diagnostics`, `clojure-lsp references --from ns/var` for
   static questions. There is no Clojure LSP plugin or MCP server configured.
+- `gmake tags` writes `./tags` (Universal Ctags): one line per `defn`,
+  `defn-`, `def`, `deftest` and `ns`, with file and line. `grep -P
+  '^derive\t' tags` finds a definition. GitNexus does not parse Clojure (its
+  index of this repo holds files only), so do not use it here.
+
+A SessionStart hook (`.claude/settings.json`) runs `dev/session-status.bb`
+and puts the result in your context: whether `.nrepl-port` points at a live
+REPL, whether that REPL is running in *this* checkout, the tmux session name
+and whether it is up. `gmake status` runs the same check. Read it before
+evaluating anything: a stale or wrong-checkout port means your results are
+about some other code.
 
 ## Finding your way
 
