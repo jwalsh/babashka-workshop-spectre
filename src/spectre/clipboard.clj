@@ -22,4 +22,27 @@
   ([s] (copy! s (tool)))
   ([s cmd])) ;; TODO
 
-(comment (copy! "foo"))
+(comment
+  ;; Load this file first (C-c C-k): fs/ and p/ only resolve, for evaluation
+  ;; and for C-c C-d d alike, once the namespace exists in the REPL.
+
+  ;; the docs for the calls the TODOs name; they print in the REPL buffer
+  (require '[clojure.repl :refer [dir doc source]])
+  (doc fs/which)
+  (doc p/shell)
+  (doc p/sh)
+  (dir babashka.process)
+  (source fs/which)
+
+  ;; what they give back
+  tools
+  (fs/which "cat")
+  (str (fs/which "cat"))
+  (fs/which "no-such-clipboard-tool")
+  (select-keys (p/sh {:in "a b c"} "cat") [:exit :out :err])
+  (:out (p/shell {:in "a b c" :out :string} "cat"))
+  ;; with no :out, the output goes to the nREPL server's stdout, not here
+  (p/shell {:in "a b c"} "cat")
+
+  ;; once copy! is written this overwrites your real clipboard
+  (copy! "foo"))
