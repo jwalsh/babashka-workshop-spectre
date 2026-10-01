@@ -13,6 +13,7 @@
 ;;   Launch from a shell with `-nw -l babashka-workshop-spectre.el', then:
 ;;   M-x spectre-jack-in    ; CIDER starts its own bb nREPL on a free port;
 ;;                          ; the one to use when several worktrees are open
+;;   M-x spectre-session    ; jack in and load the current buffer
 ;;   M-x spectre-nrepl      ; `bb dev' on the fixed port, then connect CIDER
 ;;   M-x spectre-nrepl-jvm  ; `bb dev --jvm', the same code with cider-nrepl
 ;;   M-x spectre-connect    ; attach to whatever already listens on :1667,
@@ -36,6 +37,8 @@
 (declare-function keycast-header-line-mode "keycast")
 (declare-function package-installed-p "package")
 (declare-function cider-jack-in-clj "cider")
+(declare-function cider-connected-p "cider-connection")
+(declare-function cider-load-buffer "cider-eval")
 (declare-function clojure-find-ns "clojure-mode")
 
 (defgroup spectre nil
@@ -69,6 +72,11 @@ else the 1667 both commands default to."
 ;; Not in .dir-locals.el: these are not `safe-local-variable's, and there
 ;; they would prompt on every file.
 (setq cider-repl-display-help-banner nil)
+
+;; In a (comment ...) block, evaluate the form at point, not the whole
+;; block: that is where the explorations in walkthrough.org are typed.
+(defvar clojure-toplevel-inside-comment-form)
+(setq clojure-toplevel-inside-comment-form t)
 (with-eval-after-load 'org
   (when (require 'ob-clojure nil t)
     (setq org-babel-clojure-backend 'cider)))
@@ -154,6 +162,28 @@ its own REPL instead of attaching to the other one's :1667."
                                  :jack-in-cmd "bb nrepl-server localhost:0")))
     (message "CIDER is not installed")))
 
+(defun spectre-session ()
+  "Jack in from the current buffer and load it once the REPL is up.
+The whole of \"open core.clj, jack in, \\[cider-load-buffer]\" as one
+command, so `gmake session' can start a session nobody has to type into."
+  (interactive)
+  (let ((buffer (current-buffer))
+        (attempts 0)
+        timer)
+    (spectre-jack-in)
+    (setq timer
+          (run-with-timer
+           1 1
+           (lambda ()
+             (setq attempts (1+ attempts))
+             (cond ((and (fboundp 'cider-connected-p) (cider-connected-p))
+                    (cancel-timer timer)
+                    (when (buffer-live-p buffer)
+                      (with-current-buffer buffer (cider-load-buffer))))
+                   ((> attempts 60)
+                    (cancel-timer timer)
+                    (message "No REPL after a minute; not loading %s" buffer))))))))
+
 (defun spectre--serve (command)
   "Start the nREPL with COMMAND unless one is up, then connect CIDER."
   (unless (spectre--listening-p)
@@ -225,6 +255,7 @@ In src/spectre-db.clj and in test/spectre-db_test.clj alike, that is
 (defvar spectre-map
   (let ((m (make-sparse-keymap)))
     (define-key m (kbd "i") #'spectre-jack-in)
+    (define-key m (kbd "s") #'spectre-session)
     (define-key m (kbd "n") #'spectre-nrepl)
     (define-key m (kbd "j") #'spectre-nrepl-jvm)
     (define-key m (kbd "c") #'spectre-connect)

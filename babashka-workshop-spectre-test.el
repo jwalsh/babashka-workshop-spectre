@@ -60,7 +60,7 @@
                   (setq bound (1+ bound))
                   (should (commandp command)))
                 spectre-map)
-    (should (= 10 bound))))
+    (should (= 11 bound))))
 
 (ert-deftest spectre-test-no-unsafe-dir-locals ()
   "Opening a file must not prompt: every dir-local is a safe one."
