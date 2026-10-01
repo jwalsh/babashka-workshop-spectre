@@ -56,8 +56,12 @@ against that branch's code."
         (expand-file-name checkout)
       spectre-root)))
 
-(defcustom spectre-nrepl-port 1667
-  "Port for `bb dev' and `bb tui2 --nrepl'.  Both default to 1667."
+(defcustom spectre-nrepl-port
+  (let ((from-environment (string-to-number (or (getenv "NREPL_PORT") ""))))
+    (if (> from-environment 0) from-environment 1667))
+  "Port for `bb dev' and `bb tui2 --nrepl'.
+NREPL_PORT when Emacs was started with it set, as .envrc does per checkout,
+else the 1667 both commands default to."
   :type 'integer)
 
 ;;;; Editing affordances
