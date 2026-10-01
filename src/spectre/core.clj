@@ -163,41 +163,41 @@
   (password "Charlie" "c d e" "c.example.com" {:variant :password :template :short})
 
   ;; real-world scenarios: clojars, github, hackernews
-  ;;
-  ;; Aidan Pace of Cambridge, MA: aygp-dr on GitHub, apace on Hacker News,
-  ;; apace@defrecord.com. His master password is xkcd's four words in
-  ;; French, so it is no secret. A real one is typed at a prompt (bb pw asks
-  ;; for it) and is in no file.
+  ;; for Aidan Pace of Cambridge, MA (aygp-dr on github, apace on hackernews,
+  ;; apace@defrecord.com): his master password is xkcd's four words in French,
+  ;; so it is no secret, and a real one is typed at a prompt and is in no file
   (def full-name "Aidan Pace")
   (def master-password "correct cheval batterie agrafe")
 
-  ;; An account he already has keeps its name: he stays aygp-dr and apace.
-  ;; Only the password is derived, and set once on the site's own
-  ;; change-password page.
+  ;; existing accounts keep their names (aygp-dr, apace): only the password
+  ;; is derived, and set once on the site's own change-password page
   (password full-name master-password "github.com" {:variant :password})
   (password full-name master-password "news.ycombinator.com" {:variant :password})
 
-  ;; It leaked, or it is time for another: the counter, and nothing else moves
+  ;; leaked, or time for another: bump the counter, nothing else moves
   (password full-name master-password "github.com" {:variant :password :counter 2})
 
-  ;; A new account can have its name derived too, and :name is the template
-  ;; that reads like one. Without it a login is fourteen characters of :long.
+  ;; a new account: the name can be derived too, and :name is the template
+  ;; that reads like one (without it a login is fourteen characters of :long)
   (password full-name master-password "clojars.org" {:variant :login :template :name})
   (password full-name master-password "clojars.org" {:variant :login})
   (password full-name master-password "clojars.org" {:variant :password})
-  ;; taken already: the login's counter. The password stays where it was
+
+  ;; name taken: bump the login's counter, the password stays where it was
   (password full-name master-password "clojars.org" {:variant :login :template :name :counter 2})
 
-  ;; derive takes a map. A bare :login in its place is ignored, so these two
-  ;; are one password and no login
-  (derive (master-key full-name master-password) "clojars.org" :login) ;; sb map not-found  
+  ;; derive takes a map: a bare :login is ignored, so these two are one
+  ;; password and no login (clj-kondo flags the first: expected map, received
+  ;; keyword)
+  (derive (master-key full-name master-password) "clojars.org" :login)
   (derive (master-key full-name master-password) "clojars.org")
-  ;; and the map is not enough: the master key has to be the :login one too.
-  ;; The second of these is what password gives
+
+  ;; the map is not enough: the master key has to be the :login one too, and
+  ;; the second of these is what password gives
   (derive (master-key full-name master-password) "clojars.org" {:variant :login})
   (derive (master-key full-name master-password :login) "clojars.org" {:variant :login})
 
-  ;; Every site, before the Red Line gets from Harvard to Central: scrypt
+  ;; every site, before the Red Line gets from Harvard to Central: scrypt
   ;; once for each variant, and derive is instant after that
   (let [login-key (master-key full-name master-password :login)
         password-key (master-key full-name master-password :password)]
@@ -206,23 +206,23 @@
        :login (derive login-key site {:variant :login :template :name})
        :password (derive password-key site {:variant :password})}))
 
-  ;; What has to be the same every time, to the letter: his name and the site
+  ;; exact every time, to the letter: his name and the site
   (= (password "aidan pace" master-password "github.com" {})
      (password "Aidan Pace" master-password "github.com" {}))
   (= (password full-name master-password "www.github.com" {})
      (password full-name master-password "github.com" {}))
 
-  ;; A bank that asks where he grew up. Cambridge is true and easy to find.
-  ;; This is neither, and it is what the third variant is for
+  ;; a bank that asks where he grew up: Cambridge is true and easy to find,
+  ;; this is neither, and it is what the third variant is for
   (password full-name master-password "bank.example.com" {:variant :answer :template :phrase})
 
-  ;; A hobby, and a new account, so the name is derived as well. The Nuttall
-  ;; Ornithological Club was founded in 1873 and meets at Harvard, a walk
+  ;; a hobby, and a new account, so the name is derived as well: the
+  ;; Nuttall Ornithological Club, founded in 1873, meets at Harvard, a walk
   ;; from his door
   (password full-name master-password "nuttallclub.org" {:variant :login :template :name})
   (password full-name master-password "nuttallclub.org" {:variant :password})
 
-  ;; And the radio: the MIT Radio Society, W1MX, America's oldest college
+  ;; and the radio: the MIT Radio Society, W1MX, America's oldest college
   ;; amateur station, two stops down the Red Line from the birds
   (password full-name master-password "w1mx.mit.edu" {:variant :login :template :name})
   (password full-name master-password "w1mx.mit.edu" {:variant :password})
