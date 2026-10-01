@@ -38,7 +38,7 @@ bb test --vars spectre.cli-test/spec-test
 You can also select by test metadata with ~--includes~ / ~--excludes~, e.g. ~bb test --excludes :clipboard~ to skip the real-clipboard test in E2.
 
 * TODO E1
-DEADLINE: <2026-09-30 Wed>
+DEADLINE: <2026-10-01 Thu>
 
 ~spectre.core~ and ~spectre.scrypt~ are given to you complete and working:
 together they are a full, correct implementation of the Spectre v3 algorithm.
