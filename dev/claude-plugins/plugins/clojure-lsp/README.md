@@ -21,12 +21,25 @@ Needs `clojure-lsp` on PATH (`gmake deps` shows it).
 
 ## Status
 
-Written 2026-09-30 and **not yet installed or run**. Unknown until it is:
+Installed and run on 2026-09-30, on `src/spectre/core.clj`:
 
-- whether the declaration is accepted as written (`args`, the two language
-  ids);
-- how long the first start takes while clojure-lsp analyses the classpath;
-- whether Java interop symbols (`javax.crypto.Mac` in `core.clj`) resolve;
+- document symbols: the namespace and its 12 definitions, private ones
+  marked;
+- references to `master-key`: 10 across `core.clj` and `cli.clj`;
+- diagnostics arrive unasked after the first call, from both clj-kondo and
+  clojure-lsp.
+
+What it took to get there:
+
+- A session only sees a marketplace added from inside it. One added with
+  `claude plugin marketplace add` from a shell is not found by `/plugin
+  install` in a session already running; `claude plugin install` from the
+  same shell works.
+- `/reload-plugins` did not start the server. Restarting the session did.
+
+Not working, or not known:
+
+- hover on a Java interop call (`Mac/getInstance`) comes back empty;
 - whether it and an Emacs lsp-mode session contend over `.lsp/.cache`.
 
 Without it, the same questions are answered from the shell:

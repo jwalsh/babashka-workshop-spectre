@@ -42,7 +42,11 @@ A claim about what the code does should come from running it.
 - Without a session, `bb -e "(require 'spectre.core) ..."` is enough for a
   one-off.
 - `clojure-lsp diagnostics`, `clojure-lsp references --from ns/var` for
-  static questions. There is no Clojure LSP plugin or MCP server configured.
+  static questions from the shell. With the local plugin installed
+  (`dev/claude-plugins/`, see its README) the LSP tool answers the same
+  for `.clj`: symbols, references, definitions. It also pushes clj-kondo and
+  clojure-lsp diagnostics into your context unasked; the unfilled stubs
+  account for nearly all of them.
 - `gmake tags` writes `./.tags` (Universal Ctags): one line per `defn`,
   `defn-`, `def`, `deftest` and `ns`, with file and line. `awk -F'\t'
   '$1=="derive"' .tags` finds a definition. `gmake TAGS` is the Emacs table:
