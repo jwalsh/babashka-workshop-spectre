@@ -38,6 +38,8 @@
 (declare-function cider-mode "cider-mode")
 (declare-function keycast-header-line-mode "keycast")
 (declare-function package-installed-p "package")
+(declare-function package-activate "package")
+(declare-function package-load-all-descriptors "package")
 (declare-function cider-jack-in-clj "cider")
 (declare-function cider-connected-p "cider-connection")
 (declare-function cider-load-buffer "cider-eval")
@@ -101,11 +103,22 @@ else the 1667 both commands default to."
 ;; menus.
 (menu-bar-mode 1)
 
+(defun spectre--keycast ()
+  "Load keycast, non-nil when that worked.
+An init file that never activates package.el leaves an installed keycast
+off the `load-path': activate it, and what it depends on, from
+`package-user-dir' and try again.  Nothing else is activated."
+  (or (require 'keycast nil t)
+      (and (require 'package nil t)
+           (progn (package-load-all-descriptors)
+                  (ignore-errors (package-activate 'keycast))
+                  (require 'keycast nil t)))))
+
 (defun spectre-screenshare ()
   "Show keystrokes in the header line, at the top of every window.
 Offers to install keycast when it is missing."
   (interactive)
-  (unless (require 'keycast nil t)
+  (unless (spectre--keycast)
     (when (y-or-n-p "Keycast is not installed.  Install it from the archives? ")
       (package-refresh-contents)
       (package-install 'keycast)
@@ -115,7 +128,7 @@ Offers to install keycast when it is missing."
     (message "No keycast, so no keystrokes in the header line")))
 
 ;; On by default when keycast is there; never installs anything on load.
-(when (require 'keycast nil t)
+(when (spectre--keycast)
   (spectre-screenshare))
 
 ;;;; nREPL

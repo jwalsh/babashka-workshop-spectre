@@ -35,14 +35,14 @@ The shape: ~core~ sits on ~scrypt~ and nothing else of ours. ~clipboard~, ~db~, 
 
 Open ~src/spectre/core.clj~ and ~M-x spectre-jack-in~. Then:
 
-| key       | does                                                        |
-|-----------+-------------------------------------------------------------|
-| ~C-c C-k~ | load the whole buffer                                       |
-| ~C-c C-c~ | evaluate the top-level form at point (also ~C-M-x~)         |
-| ~C-x C-e~ | evaluate the form before point                              |
-| ~C-c C-p~ | the same, pretty-printed in a popup: use it for the big maps |
-| ~C-c C-z~ | switch to the REPL buffer                                   |
-| ~C-c M-n M-n~ | put the REPL in this buffer's namespace                  |
+| key           | does                                                         |
+|---------------+--------------------------------------------------------------|
+| ~C-c C-k~     | load the whole buffer                                        |
+| ~C-c C-c~     | evaluate the top-level form at point (also ~C-M-x~)          |
+| ~C-x C-e~     | evaluate the form before point                               |
+| ~C-c C-p~     | the same, pretty-printed in a popup: use it for the big maps |
+| ~C-c C-z~     | switch to the REPL buffer                                    |
+| ~C-c M-n M-n~ | put the REPL in this buffer's namespace                      |
 
 Inside a ~(comment ...)~ block, ~C-c C-c~ evaluates the one form at point, not the whole block: the workshop's Emacs wiring sets ~clojure-toplevel-inside-comment-form~ for that.
 
@@ -58,16 +58,16 @@ To get the same understanding form by form instead, start at the ~ns~ form and p
 
 The file is written bottom-up, so reading top to bottom meets each piece before its first use.
 
-| form                              | what it is                                                                  |
-|-----------------------------------+-----------------------------------------------------------------------------|
-| ~scope~                           | variant keyword to the salt prefix string                                   |
-| ~templates~                       | template keyword to a vector of patterns, one letter per output character   |
-| ~char-classes~                    | pattern letter to the characters it may become                              |
-| ~u32~ ~utf8~ ~cat-bytes~ ~ub~     | byte plumbing: ints and strings to bytes, concatenation, unsigned read      |
-| ~master-key~                      | name + master password to 64 bytes, through scrypt. The only slow step      |
-| ~site-seed~                       | master key + site + counter to 32 bytes, through HMAC-SHA256                |
-| ~derive~                          | seed to password: byte 0 picks the pattern, bytes 1.. pick each character   |
-| ~password~                        | ~master-key~ then ~derive~ in one call                                      |
+| form                          | what it is                                                                |
+|-------------------------------+---------------------------------------------------------------------------|
+| ~scope~                       | variant keyword to the salt prefix string                                 |
+| ~templates~                   | template keyword to a vector of patterns, one letter per output character |
+| ~char-classes~                | pattern letter to the characters it may become                            |
+| ~u32~ ~utf8~ ~cat-bytes~ ~ub~ | byte plumbing: ints and strings to bytes, concatenation, unsigned read    |
+| ~master-key~                  | name + master password to 64 bytes, through scrypt. The only slow step    |
+| ~site-seed~                   | master key + site + counter to 32 bytes, through HMAC-SHA256              |
+| ~derive~                      | seed to password: byte 0 picks the pattern, bytes 1.. pick each character |
+| ~password~                    | ~master-key~ then ~derive~ in one call                                    |
 
 The flow, with what varies at each step:
 
