@@ -18,20 +18,24 @@ fill in stubs. The password tool is the vehicle. The subject is the method,
 and what an agent can read besides files: a shared live REPL, the editor's
 own state, logs, hooks, a language server.
 
-## Where things stand (2026-10-01)
+## Where things stand (2026-10-02)
 
-- `main` carries the tooling and is the base. `src/` and `test/` match
-  upstream's `main` except for exploration forms in the `comment` blocks of
-  `core.clj`, `clipboard.clj` and `db.clj`. Nothing is pushed; `origin` is a
-  public fork, so decide private or rewritten history before the first push.
-- No exercise is implemented. 30 TODO markers (`gmake todos`). E1's one
-  existing test passes; E2 to E5 fail as designed, and `exercises.org` has
-  the count for each target. Deadlines: `gmake agenda`.
+- `main` carries the tooling and is the base. `src/` and `test/` differ from
+  upstream's `main` in four files: E1's tests in `core_test.clj`, docstrings
+  and probes in `core.clj`, and exploration forms in the `comment` blocks of
+  `clipboard.clj` and `db.clj`. Nothing is pushed to `origin`. It is a public
+  fork, where a push publishes at once: decide between the history as it is
+  and a scrubbed one before the first push.
+- E1 is done and merged: `gmake e1` runs 3 tests, 13 assertions. E2 to E5
+  are stubs, 29 TODO markers (`gmake todos`), and `gmake test` stands at 22
+  tests, 98 assertions, 27 failing and 2 errors, all of them in those four.
+  Deadlines: `gmake agenda`. E2 and E3 are due Friday 2026-10-02, E4 to E6
+  Saturday.
 - `exercises.org` carries, per exercise, what it loads, who calls its stubs
   and how to read the docs for the calls it names. E2 and E3 are done in
   detail; E4 to E6 are thinner.
 - Worktrees, under `worktrees/` (ignored through `.git/info/exclude`):
-  `e1`, level with `main`, for E1's test additions; `conj-26`, upstream's
+  `e1`, merged into `main` and level with it; `conj-26`, upstream's
   solutions branch, with none of our tooling. Do not read solution bodies
   out of `conj-26` into an exercise branch.
 - Hooks in `.claude/settings.json`: session status on start; delimiter
@@ -105,9 +109,9 @@ own state, logs, hooks, a language server.
 - clj-kondo on PATH is 2024.11.14; current is 2026.08.04. The newer one
   inside clojure-lsp reports a namespace-name mismatch in
   `dev/session-status.bb` that `clj-kondo --lint dev` does not.
-- `cljfmt check src test dev` fails on one whitespace-only line in
-  `core.clj`'s `comment` block. Left: the file was open in Emacs with an
-  unsaved edit. The edit hook removes it the next time the file is edited.
+- `clj-kondo --lint src` reports one type mismatch in `core.clj` on purpose:
+  the `comment` block keeps the bare `:login` passed to `derive` as a probe
+  (finding 52).
 - Java on the shell's PATH is 21; the FFI scrypt path needs 22+.
 - nREPL messages are logged in memory only (`*nrepl-messages ...*`). Nothing
   durable records what was evaluated.

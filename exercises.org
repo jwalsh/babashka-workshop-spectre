@@ -97,7 +97,7 @@ Where each target stands with nothing implemented (2026-09-30):
 
 Some assertions pass on a stub, because ~nil~ is what they expect. [[file:.meta/conj-26-review.md][.meta/conj-26-review.md]] is what the finished CLI and TUI do, run from the workshop's solutions branch: the behaviour to check an implementation against, without the code.
 
-* TODO E1
+* DONE E1
 DEADLINE: <2026-10-01 Thu>
 
 ~spectre.core~ and ~spectre.scrypt~ are given to you complete and working:
@@ -123,9 +123,10 @@ bb test --nses spectre.core-test
 ** Working it here
 
 - [[file:walkthrough.org][walkthrough.org]] is the map for this one: what ~core.clj~ loads, the order to read it in, the flow from name to password, and under /What each input changes/ the five checks above as REPL forms with the values they return.
-- The ~comment~ block of ~core.clj~ already holds explorations: ~master-key~ and ~derive~ taken apart, then ~password~ across three templates. They are assertions that have not been written down as ~is~ yet.
+- The ~comment~ block of ~core.clj~ holds the probes the tests came from: the five checks in numbered groups, then real accounts worked for one person, with the two mistakes that cost the time kept as probes.
 - ~master-key~ is the slow step, about 0.15 s a call here, and ~password~ pays it on every call. ~derive~ on a key made once does not.
 - ~gmake e1~ passes before you start, on the one test given. This exercise only adds tests.
+- Done 2026-10-02: ~inputs-test~ and ~template-test~ in [[file:test/spectre/core_test.clj][core_test.clj]]. ~gmake e1~ now runs 3 tests, 13 assertions.
 
 * TODO E2
 DEADLINE: <2026-10-02 Fri>
