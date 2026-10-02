@@ -246,6 +246,15 @@ order is not by number. Each was hit, not reasoned to.
     started a browser, and would have written the image had what it was fed
     been a diagram. The view is run directly now, and the dry run prints.
 
+54. **An editor started from a recipe thinks it is inside make.** `gmake
+    demo` handed Emacs the recipe's environment, `MAKELEVEL=1` with it, and
+    every `gmake` in an Emacs shell printed `gmake[1]: Entering directory`:
+    seen in a pasted shell, then read from the running Emacs. `MAKEFLAGS`
+    goes the same way, and it carries the variables of the command line, so
+    `gmake demo FILE=...` would have given that `FILE` to every later run
+    inside the editor. `demo`, `session` and `claude` now start what outlives
+    them through `env -u`. An Emacs already running keeps what it was given.
+
 ## The exercises themselves
 
 53. **Ten minutes was for the writing, not for the finding out.** The session

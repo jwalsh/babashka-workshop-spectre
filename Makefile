@@ -134,13 +134,21 @@ guard-resources: ## Fail if anything under resources/ is tracked, staged, or in 
 	fi; \
 	echo "guard-resources: nothing under resources/ is tracked, staged or in history"
 
+# make marks a recipe's environment as a sub-make's: MAKELEVEL, and in
+# MAKEFLAGS the variables given on its command line. An editor, or a tmux
+# server, started from a recipe keeps them, and every gmake run inside it
+# then prints `gmake[1]: Entering directory' and takes FILE=, EMACS= and the
+# rest from the run that started the editor. What outlives the recipe is
+# started without them.
+OUTSIDE_MAKE := env -u MAKELEVEL -u MAKEFLAGS -u MFLAGS -u MAKE_TERMOUT -u MAKE_TERMERR
+
 # One Emacs in a detached tmux session, jacked in with FILE loaded. You attach
 # to it; an agent reads it with session-shot and evaluates in the same REPL
 # through .nrepl-port (brepl -e '(...)'). direnv exec gives it this
 # checkout's environment whatever the tmux server was started with.
 session: ## Emacs in tmux, jacked in, FILE loaded (default core.clj); attach with tmux attach -t $(SESSION)
 	@if tmux has-session -t $(SESSION) 2>/dev/null; then echo "session $(SESSION) already running"; else \
-	  tmux new-session -d -s $(SESSION) -x 140 -y 44 -c "$(CURDIR)" \
+	  $(OUTSIDE_MAKE) tmux new-session -d -s $(SESSION) -x 140 -y 44 -c "$(CURDIR)" \
 	    "$$(command -v direnv >/dev/null && echo 'direnv exec .') $(EMACS) -nw -l babashka-workshop-spectre.el $(FILE) -f spectre-session" && \
 	  echo "started $(SESSION): tmux attach -t $(SESSION)"; fi
 
@@ -151,7 +159,7 @@ session: ## Emacs in tmux, jacked in, FILE loaded (default core.clj); attach wit
 # long init file has run, a bare `-l name.el' is no longer found here.
 demo: ## Graphical Emacs, jacked in, FILE loaded (EMACS=/path/to/emacs for another build)
 	@if [ -f .nrepl-port ]; then echo "a REPL is already recorded in .nrepl-port; see gmake status"; else \
-	  nohup $$(command -v direnv >/dev/null && echo 'direnv exec .') $(EMACS) -l "$(CURDIR)/babashka-workshop-spectre.el" "$(CURDIR)/$(FILE)" -f spectre-session >/dev/null 2>&1 & \
+	  nohup $(OUTSIDE_MAKE) $$(command -v direnv >/dev/null && echo 'direnv exec .') $(EMACS) -l "$(CURDIR)/babashka-workshop-spectre.el" "$(CURDIR)/$(FILE)" -f spectre-session >/dev/null 2>&1 & \
 	  echo "started $(EMACS) on $(FILE); gmake status once it has jacked in"; fi
 
 session-shot: ## Print what the session's screen shows right now
@@ -247,7 +255,7 @@ CLAUDE_START = $(CLAUDE)$(if $(CLAUDE_FLAGS), $(CLAUDE_FLAGS))$(if $(wildcard $(
 claude: ## Claude in this checkout's own tmux session: make it, start Claude if the pane is at a shell, attach
 	@if [ -n "$$CLAUDECODE" ] && [ -z "$$TMUX" ]; then \
 	  echo "This is a Claude session outside tmux, and -c from here would open its conversation a second time. Run gmake claude from a shell of your own." >&2; exit 1; fi
-	@tmux has-session -t '=$(TMUX_SESSION)' 2>/dev/null || tmux new-session -d -s '$(TMUX_SESSION)' -c '$(CURDIR)'
+	@tmux has-session -t '=$(TMUX_SESSION)' 2>/dev/null || $(OUTSIDE_MAKE) tmux new-session -d -s '$(TMUX_SESSION)' -c '$(CURDIR)'
 	@case "$$(tmux display-message -p -t '=$(TMUX_SESSION):' '#{pane_current_command}')" in \
 	  zsh|bash|sh|fish|-zsh|-bash|-sh|-fish) tmux send-keys -t '=$(TMUX_SESSION):' '$(CLAUDE_START)' Enter ;; \
 	esac
