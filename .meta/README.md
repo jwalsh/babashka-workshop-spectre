@@ -55,9 +55,18 @@ own state, logs, hooks, a language server.
   blocks` rebuilds every Org dynamic block named `workshop` from them and
   `CHECK=1` reports the ones that are behind. No document has such a block
   yet: it was tried on scratch documents only.
+- `gmake claude` puts Claude Code in a tmux session of its own for the
+  checkout and attaches; `gmake claude-status` reads it. It starts Claude
+  with `--permission-mode auto`, the owner's choice on 2026-10-02.
 
 ## Open
 
+- An operator started unattended has no brief here: nothing says what it is
+  to do, or to leave alone, when nobody is there. And `-c` continues the
+  most recent conversation in the directory, so `gmake claude` run while
+  another session is live in the same checkout opens that session's
+  conversation a second time. The target only refuses when it is run from
+  inside one.
 - The generated blocks, in the order they would be done:
   1. `walkthrough.org` opens with a block pasted from `gmake namespaces` and
      annotated by hand. As `#+BEGIN: workshop :view namespaces :as text
@@ -151,6 +160,10 @@ own state, logs, hooks, a language server.
   it asks with was run read-only against the running one and answered
   rightly for a modified, an open and an unopened file; the refusal itself
   was run against a stand-in for `emacsclient`.
+- `gmake claude` with the real `claude`, and its attach. It was run against
+  a tmux server of its own with a stand-in for `claude` and with attach and
+  switch-client recorded, not done: 21 checks. The `STATUS.org` branch of
+  `gmake claude-status` was not run, there being no such file.
 - A generated Mermaid block drawn in the Emacs someone is sitting in. One
   was drawn by `ob-mermaid` in a batch Emacs with no init file, and the
   views by `gmake draw`.

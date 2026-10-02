@@ -116,6 +116,8 @@ gmake status        # is the REPL live, and is it this checkout's
 | ~gmake seed~            | add example sites to ~db.edn~; writes nothing before E3                                         |
 | ~gmake elisp~           | byte-compile, checkdoc and ERT for the Emacs wiring                                             |
 | ~gmake docs~            | check these documents against the code: targets, commands, links, and the walkthrough's results |
+| ~gmake claude~          | Claude in a tmux session of its own for this checkout: make it, start Claude, attach            |
+| ~gmake claude-status~   | what that session is doing, without attaching or changing anything                              |
 
 ** Parts built from the files
 
@@ -181,6 +183,21 @@ The CIDER, clojure-mode and lsp-mode entries are copied from the checkout the ru
 ** For an agent
 
 ~.claude/settings.json~ has two hooks: the session status is put in context at start, and every Write and Edit of a Clojure file has its delimiters balanced and is formatted with cljfmt. ~dev/claude-plugins/~ is a local plugin that puts ~clojure-lsp~ behind Claude Code's LSP tool. [[file:AGENTS.md][AGENTS.md]] is the contract.
+
+** An operator
+
+~gmake claude~ puts Claude Code in a tmux session of its own for this checkout, ~spectre-claude~ here and ~spectre-<dir>-claude~ in a worktree. It makes the session when there is none, starts Claude when the session's pane is at a shell, and attaches. A second run only attaches. ~gmake claude-status~ prints what that pane is running and its last lines, and changes nothing.
+
+Claude is started with ~--permission-mode auto~, which is for an operator nobody is sitting with; ~CLAUDE_FLAGS=~ takes it out. It is started with ~-c~ when this directory already has a conversation. From inside a Claude session that is not in tmux the target refuses: ~-c~ there would open that session's own conversation a second time.
+
+What it cannot tell:
+
+- A pane whose command is not a shell is taken to have an operator in it. One left in an editor or a long build looks the same.
+- Only the session's active pane is looked at.
+- ~-c~ continues the most recent conversation in the directory, whichever that was.
+- Where Claude keeps a directory's conversations is read off this machine, not off documentation.
+
+An unattended operator needs a brief it can follow alone. There is none here yet.
 
 ** Checkouts
 

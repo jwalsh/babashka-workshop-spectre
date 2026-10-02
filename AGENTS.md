@@ -151,6 +151,7 @@ reading, and say which one a claim came from.
 | one exercise's tests | `gmake e1` … `gmake e5` |
 | all required tests | `gmake test` |
 | the manual for an installed tool or library | `resources/INDEX.org`; `gmake resources` fetches, `LIST=1` only reports |
+| what an operator in tmux is doing | `gmake claude-status`: it reads and changes nothing. `gmake claude` is the owner's to run, and refuses from inside a session |
 | every target | `gmake help`; `README.org` has the same list with more words |
 | do the documents still match | `gmake docs` |
 

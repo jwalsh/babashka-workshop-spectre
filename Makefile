@@ -16,7 +16,7 @@ SHELL := bash
 
 .DEFAULT_GOAL := help
 
-.PHONY: help FORCE demo session session-shot session-stop status tags deps deps-emacs todos agenda namespaces files blocks draw resources guard-resources elisp docs test e1 e2 e2-clipboard e3 e4 e5 e5-optional e5-tui e6 seed nrepl nrepl-jvm nrepl-stop
+.PHONY: help FORCE demo session session-shot session-stop status tags deps deps-emacs todos agenda namespaces files blocks draw resources guard-resources elisp docs test e1 e2 e2-clipboard e3 e4 e5 e5-optional e5-tui e6 seed nrepl nrepl-jvm nrepl-stop claude claude-status
 
 help: ## Show available targets
 	@grep -E '^[a-zA-Z0-9_.-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-16s %s\n", $$1, $$2}'
@@ -223,3 +223,41 @@ nrepl-jvm: ## Same code on a JVM Clojure with cider-nrepl, same port: apropos, j
 nrepl-stop: ## Stop the nREPL on this checkout's NREPL_PORT
 	@pid=$$(lsof -ti :$(NREPL_PORT) 2>/dev/null); \
 	if [ -n "$$pid" ]; then kill $$pid && echo "Stopped nREPL on $(NREPL_PORT)"; else echo "nREPL not running"; fi
+
+# An operator: Claude Code in a tmux session of its own, one for each
+# checkout. `gmake claude' makes the session when there is none, starts
+# Claude in it when its pane is at a shell, and attaches. A second run only
+# attaches. `gmake claude-status' reads the same session and changes nothing.
+#
+# --permission-mode auto is for an operator nobody is sitting with. For one
+# you watch, pass CLAUDE_FLAGS= or take it out here.
+TMUX_SESSION ?= $(SESSION)-claude
+CLAUDE       ?= claude
+CLAUDE_FLAGS ?= --permission-mode auto
+# Claude keeps a directory's conversations under ~/.claude/projects, in a
+# directory named after the path with every / and . made a -. A .jsonl there
+# is a conversation to continue with -c. The rule is read off this machine's
+# directories, not off documentation.
+CLAUDE_HISTORY = $(HOME)/.claude/projects/$(subst .,-,$(subst /,-,$(CURDIR)))
+CLAUDE_START = $(CLAUDE)$(if $(CLAUDE_FLAGS), $(CLAUDE_FLAGS))$(if $(wildcard $(CLAUDE_HISTORY)/*.jsonl), -c)
+
+# The = makes tmux match the name exactly: without it spectre would match
+# spectre-claude. A pane whose command is not a shell is taken to have an
+# operator in it already, which a pane left in vim or a long build also is.
+claude: ## Claude in this checkout's own tmux session: make it, start Claude if the pane is at a shell, attach
+	@if [ -n "$$CLAUDECODE" ] && [ -z "$$TMUX" ]; then \
+	  echo "This is a Claude session outside tmux, and -c from here would open its conversation a second time. Run gmake claude from a shell of your own." >&2; exit 1; fi
+	@tmux has-session -t '=$(TMUX_SESSION)' 2>/dev/null || tmux new-session -d -s '$(TMUX_SESSION)' -c '$(CURDIR)'
+	@case "$$(tmux display-message -p -t '=$(TMUX_SESSION):' '#{pane_current_command}')" in \
+	  zsh|bash|sh|fish|-zsh|-bash|-sh|-fish) tmux send-keys -t '=$(TMUX_SESSION):' '$(CLAUDE_START)' Enter ;; \
+	esac
+	@if [ -n "$$TMUX" ]; then tmux switch-client -t '=$(TMUX_SESSION)'; else tmux attach -t '=$(TMUX_SESSION)'; fi
+
+claude-status: ## What this checkout's Claude session is doing, without attaching or changing anything
+	@if [ -f STATUS.org ]; then cat STATUS.org; echo "--- commits"; git log --oneline -8; fi
+	@if tmux has-session -t '=$(TMUX_SESSION)' 2>/dev/null; then \
+	  echo "session $(TMUX_SESSION): its pane is running $$(tmux display-message -p -t '=$(TMUX_SESSION):' '#{pane_current_command}')"; \
+	  tmux capture-pane -p -t '=$(TMUX_SESSION):' | grep -v '^[[:space:]]*$$' | tail -12; \
+	else \
+	  echo "no tmux session $(TMUX_SESSION). gmake claude would start it with: $(CLAUDE_START)"; \
+	fi
