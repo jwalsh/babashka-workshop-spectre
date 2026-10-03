@@ -56,3 +56,18 @@
               (is (= "spectre-test-value" (pasted paste))))
             (finally
               (clipboard/copy! previous))))))))
+
+(comment
+  ;; load clipboard.clj, then this file (C-c C-k in each): the tests call
+  ;; whatever copy! the REPL holds, so load clipboard.clj again after each
+  ;; change to it, or they run the old one
+  (clojure.test/run-tests 'spectre.clipboard-test)
+
+  ;; one test at a time, with the same summary
+  (clojure.test/run-test copy-test)
+  (clojure.test/run-test no-tool-test)
+
+  ;; real-clipboard-test passes here without asserting anything: it only runs
+  ;; when SPECTRE_CLIPBOARD_TEST was set before the REPL started. gmake
+  ;; e2-clipboard sets it, overwrites your clipboard, and puts it back
+  (clojure.test/run-test real-clipboard-test))
