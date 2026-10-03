@@ -90,6 +90,47 @@
       (should (string-match-p "unused" (flymake-diagnostic-text (car reported))))
       (should (= 4 (line-number-at-pos (flymake-diagnostic-beg (car reported))))))))
 
+(ert-deftest spectre-test-info-without-a-name-is-none ()
+  "What babashka answers for an alias, a namespace or a typo counts as nothing."
+  (skip-unless (require 'nrepl-dict nil t))
+  (should-not (spectre--named-info nil))
+  (should-not (spectre--named-info '(dict "id" "21" "status" ("done"))))
+  (should (spectre--named-info '(dict "ns" "babashka.fs" "name" "which")))
+  (should (spectre--named-info '(dict "class" "java.lang.String"))))
+
+(ert-deftest spectre-test-namespace-page ()
+  "A namespace page writes names as the buffer that asked types them."
+  (with-temp-buffer
+    (spectre--insert-namespace "babashka.fs"
+                               '(("exists?" "[path]") ("which" "[program] [program opts]"))
+                               "fs" "spectre.clipboard")
+    (goto-char (point-min))
+    (should (looking-at-p "babashka.fs\n  fs/ in spectre.clipboard\n  2 public names"))
+    (should (search-forward "fs/which    [program] [program opts]" nil t))
+    (let ((looked-up nil))
+      (cl-letf (((symbol-function 'cider-doc-lookup)
+                 (lambda (symbol) (setq looked-up symbol))))
+        (push-button (- (point) (length "fs/which    [program] [program opts]"))))
+      (should (equal "babashka.fs/which" looked-up))))
+  (with-temp-buffer
+    (spectre--insert-namespace "babashka.fs" '(("which" "[program]")))
+    (should (string-match-p "^which  \\[program\\]$" (buffer-string)))
+    (should-not (string-match-p "fs/" (buffer-string)))))
+
+(ert-deftest spectre-test-namespace-form ()
+  "The Clojure that describes a namespace runs in babashka and reads in Emacs."
+  (skip-unless (executable-find "bb"))
+  (let ((values (mapcar (lambda (asked)
+                          (let ((code (format spectre--namespace-form asked "user")))
+                            (car (read-from-string
+                                  (car (process-lines "bb" "-e" (concat "(require '[babashka.fs :as fs]) (prn " code ")")))))))
+                        '("fs" "babashka.fs" "sf"))))
+    (should (equal "babashka.fs" (aref (nth 0 values) 0)))
+    (should (equal (nth 0 values) (nth 1 values)))
+    (should (seq-find (lambda (entry) (equal ["which" "[program] [program opts]"] entry))
+                      (aref (nth 0 values) 1)))
+    (should-not (nth 2 values))))
+
 (ert-deftest spectre-test-no-unsafe-dir-locals ()
   "Opening a file must not prompt: every dir-local is a safe one."
   (let ((dir-locals (with-temp-buffer

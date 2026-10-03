@@ -40,7 +40,9 @@
 ;; blocks, keycast in the header line when installed, a log of every nREPL
 ;; message, and clj-kondo through Flymake for Clojure files inside a Spectre
 ;; checkout.  It turns native-compiled trampolines off, so that CIDER's
-;; menus open where libgccjit is broken.
+;; menus open where libgccjit is broken.  And it changes what C-c C-d d does
+;; on a name babashka cannot document: an alias or a namespace gets a page
+;; of its public names, anything else a message instead of a Lisp error.
 
 ;;; Code:
 
@@ -372,6 +374,120 @@ file, which is shared by every project."
     (flymake-mode 1)))
 
 (add-hook 'clojure-mode-hook #'spectre--flymake)
+
+;;;; Documentation
+
+;; \\[cider-doc] against babashka's nREPL.  It answers `info' for a var and
+;; for nothing else: asked about an alias, a namespace or a typo, or about
+;; anything at all from a buffer whose namespace it has not loaded, it
+;; replies "done" with no name in it, and CIDER fails drawing the name that
+;; is not there: "Wrong type argument: stringp, nil".  Here an answer with
+;; no name counts as no answer, which CIDER then puts into words, and an
+;; alias or a namespace gets a page of its own: what it holds, every name a
+;; button for its documentation.
+
+(defvar cider-doc-buffer)
+(declare-function cider--help-setup-xref "cider-util")
+(declare-function cider-current-ns "cider-client")
+(declare-function cider-doc-lookup "cider-doc")
+(declare-function cider-docview-mode "cider-doc")
+(declare-function cider-make-popup-buffer "cider-popup")
+(declare-function cider-nrepl-sync-request:eval "cider-client")
+(declare-function nrepl-dict-get "nrepl-dict")
+
+(defun spectre--named-info (info)
+  "INFO when it names something, else nil.
+Filters what `cider-var-info' returns.  A var has a name, a Java class a
+class, an ambiguous member its candidates; babashka's reply for anything
+it cannot resolve has none of the three."
+  (and info
+       (or (nrepl-dict-get info "name")
+           (nrepl-dict-get info "class")
+           (nrepl-dict-get info "candidates"))
+       info))
+
+(defconst spectre--namespace-form
+  "(let [wanted (symbol %S)
+      target (or (some-> (find-ns (symbol %S)) ns-aliases (get wanted))
+                 (find-ns wanted))]
+  (when target
+    [(str (ns-name target))
+     (vec (for [[name var] (sort-by key (ns-publics target))]
+            [(str name) (apply str (interpose \" \" (:arglists (meta var))))]))]))"
+  "Clojure describing a namespace: its name, then its public names.
+Formatted with the symbol asked about and the namespace it was asked from,
+both as strings: the symbol is taken as an alias there first, then as the
+name of a namespace.  Evaluates to nil, or to a vector that the Emacs
+reader takes as well: [NAMESPACE [[NAME ARGLISTS] ...]], all strings.")
+
+(defun spectre--describe-namespace (symbol home)
+  "What the REPL knows of the namespace SYMBOL names or is an alias of.
+A list (NAMESPACE NAMES), where NAMES holds a (NAME ARGLISTS) pair of
+strings for each public var, or nil when SYMBOL is neither.  An alias is
+looked up in the namespace HOME."
+  (when-let* ((code (format spectre--namespace-form symbol home))
+              (value (nrepl-dict-get (cider-nrepl-sync-request:eval code nil "user")
+                                     "value"))
+              (described (ignore-errors (car (read-from-string value))))
+              ((vectorp described)))
+    (list (aref described 0)
+          (mapcar (lambda (entry) (list (aref entry 0) (aref entry 1)))
+                  (aref described 1)))))
+
+(defun spectre--insert-namespace (namespace names &optional alias home)
+  "Insert a page for NAMESPACE and its public NAMES.
+NAMES holds a (NAME ARGLISTS) pair of strings for each.  With ALIAS, what
+the namespace HOME calls NAMESPACE, a name is written behind it, the way
+it is typed there.  Each name is a button that looks up its documentation."
+  (let* ((shown (mapcar (lambda (entry)
+                          (if alias (concat alias "/" (car entry)) (car entry)))
+                        names))
+         (width (apply #'max 0 (mapcar #'length shown))))
+    (insert (propertize namespace 'font-lock-face 'font-lock-function-name-face) "\n")
+    (when alias
+      (insert (format "  %s/ in %s\n" alias home)))
+    (insert (format "  %d public names, RET on one for its documentation\n\n" (length names)))
+    (while names
+      (let ((qualified (concat namespace "/" (car (car names)))))
+        (insert-text-button (car shown)
+                            'follow-link t
+                            'help-echo qualified
+                            'action (lambda (_button) (cider-doc-lookup qualified))))
+      (insert (make-string (- (+ width 2) (length (car shown))) ?\s)
+              (cadr (car names))
+              "\n")
+      (setq names (cdr names)
+            shown (cdr shown)))))
+
+(defun spectre--namespace-doc (symbol)
+  "A doc buffer for the namespace SYMBOL names or is an alias of, or nil."
+  (let* ((asked (substring-no-properties symbol))
+         (home (substring-no-properties (cider-current-ns)))
+         (described (spectre--describe-namespace asked home)))
+    (when described
+      (let ((namespace (car described))
+            (buffer (cider-make-popup-buffer cider-doc-buffer #'cider-docview-mode 'ancillary)))
+        ;; As CIDER does for a var: after following a button, l comes back
+        ;; here.  By the namespace's own name, since an alias means nothing
+        ;; to the doc buffer.
+        (when (fboundp 'cider--help-setup-xref)
+          (cider--help-setup-xref (list #'cider-doc-lookup namespace) nil buffer))
+        (with-current-buffer buffer
+          (let ((inhibit-read-only t))
+            (if (equal asked namespace)
+                (spectre--insert-namespace namespace (cadr described))
+              (spectre--insert-namespace namespace (cadr described) asked home))
+            (goto-char (point-min))))
+        buffer))))
+
+(defun spectre--doc-buffer (create symbol &rest arguments)
+  "Around `cider-create-doc-buffer': a namespace or an alias gets a page too.
+CREATE is that function, tried first with SYMBOL and ARGUMENTS."
+  (or (apply create symbol arguments)
+      (spectre--namespace-doc symbol)))
+
+(advice-add 'cider-var-info :filter-return #'spectre--named-info)
+(advice-add 'cider-create-doc-buffer :around #'spectre--doc-buffer)
 
 ;;;; Tests
 
