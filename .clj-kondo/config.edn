@@ -7,11 +7,29 @@
  ;;
  ;; The options are an open map: a value of the wrong kind is caught, a
  ;; misspelt key is not.
+ ;;
+ ;; spectre.clipboard: a command is a vector of strings, the program first,
+ ;; as in its tools table, and copy! takes the value first. A string where
+ ;; the command goes, or the two swapped, is underlined.
+ ;;
+ ;; babashka.fs/which is the library's, annotated here because E2 calls it:
+ ;; it takes the name of a program, or a path, and throws on anything else.
+ ;; clj-kondo knows that tools is a vector, so (fs/which tools) and (-> tools
+ ;; (fs/which)) are underlined too.
  :linters
  {:type-mismatch
   {:level :warning
    :namespaces
-   {spectre.core
+   {babashka.fs
+    {which {:arities {1 {:args [:string]}
+                      2 {:args [:string :any]}}}}
+    spectre.clipboard
+    {tool {:arities {0 {:ret :nilable/vector}}}
+     copy! {:arities {1 {:args [:string]
+                         :ret :nilable/sequential}
+                      2 {:args [:string :nilable/sequential]
+                         :ret :nilable/sequential}}}}
+    spectre.core
     {master-key {:arities {2 {:args [:string :string]}
                            3 {:args [:string :string :keyword]}}}
      derive {:arities {2 {:args [:any :string]
