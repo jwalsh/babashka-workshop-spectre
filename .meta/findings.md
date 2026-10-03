@@ -40,6 +40,14 @@ order is not by number. Each was hit, not reasoned to.
     A form sent to the jacked-in REPL changes nothing on the TUI's screen;
     `brepl -p <port>` reaches the right one. A redefinition shows on the next
     keypress, not before.
+56. **A second jack-in in the same checkout leaves two REPLs and one port
+    file.** CIDER asks whether to make a new session beside the one there;
+    yes starts a second babashka nREPL, which overwrites `.nrepl-port`. The
+    owner's buffers went with the newer one, which holds nothing the older
+    one was given. Stopping the older server with SIGINT or SIGTERM then
+    deletes `.nrepl-port`, though the file names the newer one and it is
+    still listening; SIGKILL leaves it. Run with two servers in a scratch
+    directory. `gmake status` reports only the port the file names.
 
 ## Looking things up
 
@@ -80,6 +88,18 @@ order is not by number. Each was hit, not reasoned to.
     repo root for a string in `resources/babashka/fs/API.md` listed two
     documents and nothing under `resources/`. With the directory named it
     found the line. The Grep tool is the same program.
+55. **`C-c C-d d` on anything but a var was a Lisp error.** On `fs`,
+    `babashka.fs`, a typo, or the unfinished `fs/` under point, CIDER 2.0.1
+    stopped at "cider-docview-render: Wrong type argument: stringp, nil", and
+    so it did on every name, a full one included, before `C-c C-k`.
+    Babashka's `info` reply for what it cannot resolve is a bare "done" with
+    no "no-info" in it, and CIDER draws the name that is not there. Read in
+    the owner's `*nrepl-messages*` log, then reproduced in a batch Emacs with
+    no init file and the same CIDER, against a scratch REPL. The wiring now
+    drops a reply with no name, so CIDER says in words what is missing, and
+    answers an alias or a namespace with a page of its public names, each a
+    button to its docs. Corrects 31: a full name resolves in the REPL with
+    nothing loaded, not from a buffer whose namespace is not loaded.
 
 ## Environment
 

@@ -18,19 +18,24 @@ fill in stubs. The password tool is the vehicle. The subject is the method,
 and what an agent can read besides files: a shared live REPL, the editor's
 own state, logs, hooks, a language server.
 
-## Where things stand (2026-10-02)
+## Where things stand (2026-10-03)
 
 - `main` carries the tooling and is the base. `src/` and `test/` differ from
-  upstream's `main` in four files: E1's tests in `core_test.clj`, docstrings
-  and probes in `core.clj`, and exploration forms in the `comment` blocks of
-  `clipboard.clj` and `db.clj`. Nothing is pushed to `origin`. It is a public
-  fork, where a push publishes at once: decide between the history as it is
-  and a scrubbed one before the first push.
-- E1 is done and merged: `gmake e1` runs 3 tests, 13 assertions. E2 to E5
-  are stubs, 29 TODO markers (`gmake todos`), and `gmake test` stands at 22
-  tests, 98 assertions, 27 failing and 2 errors, all of them in those four.
-  Deadlines: `gmake agenda`. E2 and E3 are due Friday 2026-10-02, E4 to E6
-  Saturday.
+  upstream's `main` in five files: E1's tests in `core_test.clj`, docstrings
+  and probes in `core.clj`, exploration forms in the `comment` blocks of
+  `clipboard.clj` and `db.clj`, and REPL runners at the end of
+  `clipboard_test.clj`. Nothing is pushed to `origin`. It is a public fork,
+  where a push publishes at once: decide between the history as it is and a
+  scrubbed one before the first push.
+- E1 is done and merged: `gmake e1` runs 3 tests, 13 assertions. E2 is
+  being worked by the owner in the main checkout itself, not in
+  `worktrees/e2`, which was made and stands level with `cc359a0`, unused.
+  E3 to E5 are stubs. Deadlines: `gmake agenda`; E2 and E3 were due Friday
+  2026-10-02, E4 to E6 Saturday.
+- clj-kondo now knows E2's signatures and `fs/which`'s, and `C-c C-d d`
+  answers an alias or a namespace with a page of its names (finding 55).
+  The wiring change reaches a running Emacs only when it loads the file
+  again.
 - `exercises.org` carries, per exercise, what it loads, who calls its stubs
   and how to read the docs for the calls it names. E2 and E3 are done in
   detail; E4 to E6 are thinner.
@@ -61,6 +66,16 @@ own state, logs, hooks, a language server.
 
 ## Open
 
+- `clipboard.clj` still has the workshop's two-line docstrings. Fuller ones
+  for `tools`, `tool` and `copy!`, and numbered probes, wait on the owner's
+  buffer: it has held an unsaved edit since 2026-10-02, in the body of
+  `tool`.
+- Two babashka REPLs run in the main checkout, 64536 and 55869, from a
+  second jack-in (finding 56). `.nrepl-port` names the newer. In a batch
+  Emacs, `cider-quit` left the port file behind; a plain `kill` of the
+  older server deletes it.
+  `gmake status` could list every nREPL server whose working directory is
+  the checkout, and does not.
 - An operator started unattended has no brief here: nothing says what it is
   to do, or to leave alone, when nobody is there. And `-c` continues the
   most recent conversation in the directory, so `gmake claude` run while
@@ -164,6 +179,11 @@ own state, logs, hooks, a language server.
   a tmux server of its own with a stand-in for `claude` and with attach and
   switch-client recorded, not done: 21 checks. The `STATUS.org` branch of
   `gmake claude-status` was not run, there being no such file.
+- The namespace page of `C-c C-d d` in the Emacs someone is sitting in. It
+  was run in a batch Emacs with no init file and the owner's CIDER,
+  2.0.1-snapshot from the straight build, against a scratch REPL: the page
+  for `fs`, `p`, `babashka.fs` and `clojure.string`, a button followed and
+  `l` back, the messages for a typo and for an unloaded buffer.
 - A generated Mermaid block drawn in the Emacs someone is sitting in. One
   was drawn by `ob-mermaid` in a batch Emacs with no init file, and the
   views by `gmake draw`.

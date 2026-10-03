@@ -58,17 +58,21 @@ The order, for every exercise: map it, load it, read the docs for the calls it n
 
 The TODOs name library calls: ~fs/which~, ~p/shell~, ~edn/read-string~. What follows was checked against babashka's own nREPL, the one ~gmake demo~, ~gmake session~ and ~M-x spectre-jack-in~ start.
 
-Load the file first. ~fs/which~ is an alias, resolved through the namespace of the buffer you are in. Until ~C-c C-k~ has created that namespace in the REPL, ~C-c C-d d~ on it finds nothing. A full name, ~babashka.fs/which~, resolves at any time.
+Load the file first. ~C-c C-d d~ asks the REPL from the namespace of the buffer you are in, and until ~C-c C-k~ has created that namespace there, it finds nothing, for ~fs/which~ and ~babashka.fs/which~ alike; CIDER says so in the echo area. In the REPL itself a full name resolves at any time: ~(clojure.repl/doc babashka.fs/which)~.
 
-| want                                     | do                                                        |
-|------------------------------------------+-----------------------------------------------------------|
-| docstring and arguments                  | ~C-c C-d d~ with point on the symbol                      |
-| arguments while typing                   | nothing: eldoc puts them in the echo area                 |
-| the names in a library                   | complete after ~fs/~, or ~(clojure.repl/dir babashka.fs)~ |
-| find a name                              | ~(clojure.repl/apropos "which")~                          |
-| the source                               | ~(clojure.repl/source fs/which)~                          |
-| the call in use                          | [[file:src/tour.clj][src/tour.clj]]: evaluate its examples in place              |
-| a ~clojure.core~ function on ClojureDocs | ~C-c C-d w~, in the browser                               |
+| want                                     | do                                                                       |
+|------------------------------------------+--------------------------------------------------------------------------|
+| docstring and arguments                  | ~C-c C-d d~ with point on the symbol                                     |
+| arguments while typing                   | nothing: eldoc puts them in the echo area                                |
+| the names in a library                   | ~C-c C-d d~ on the alias or the namespace: ~fs~, ~babashka.fs~           |
+| the same, while typing                   | ~C-M-i~ after ~fs/wh~, or ~(clojure.repl/dir babashka.fs)~               |
+| find a name                              | ~(clojure.repl/apropos "which")~                                         |
+| the source                               | ~(clojure.repl/source fs/which)~                                         |
+| the call in use                          | [[file:src/tour.clj][src/tour.clj]]: evaluate its examples in place                             |
+| the manual, offline                      | the shelf, ~resources/babashka/fs/API.md~ and ~process/API.md~ beside it |
+| a ~clojure.core~ function on ClojureDocs | ~C-c C-d w~, in the browser; offline, ~resources/clojure/clojuredocs/~   |
+
+On an alias or a namespace, ~C-c C-d d~ lists its public names with their arguments, written as you would type them in the buffer you asked from, and ~RET~ on a name opens its docs; ~l~ comes back. That page is the wiring's, not CIDER's: babashka's nREPL answers documentation requests for vars only.
 
 ~doc~, ~dir~ and ~source~ print: the text lands in the REPL buffer and the value is ~nil~. The ~comment~ blocks of [[file:src/spectre/clipboard.clj][clipboard.clj]] and [[file:src/spectre/db.clj][db.clj]] open with these lookups for the calls their TODOs name.
 
@@ -181,6 +185,9 @@ real-clipboard-test        (tool), and copy! with one argument; only with SPECTR
 
 - Load ~clipboard.clj~, then ~C-c C-d d~ on each call, or evaluate the lookups that open its ~comment~ block. The forms under them show what each call gives back.
 - ~gmake e2~ starts at 2 failing, both in ~copy-test~. ~no-tool-test~ passes on the stub.
+- From the REPL: [[file:test/spectre/clipboard_test.clj][clipboard_test.clj]] ends with a ~comment~ block that runs the tests, all of them or one at a time. Load ~clipboard.clj~ again after each change to it, then the test file, or the tests run the old ~copy!~.
+- clj-kondo knows what ~tool~ returns, what ~copy!~ takes and what ~fs/which~ takes: a string where the command goes, or ~(fs/which tools)~, is underlined as you type. A file that does not read, an unfinished ~fs/~ say, loads up to that form and no further: ~gmake e2~ and ~C-c C-k~ report "Invalid symbol: fs/".
+- Nothing here needs the network: the REPL, the tests (a stand-in clipboard run with ~bb~), the docs through ~C-c C-d d~, and the manuals on the shelf.
 - Nothing in ~gmake e2~ touches your clipboard. ~gmake e2-clipboard~ does: it copies a test value and puts back what was there. So does ~(copy! "foo")~ at the end of the ~comment~ block once ~copy!~ works, and that one puts nothing back.
 - ~bb pw a.example.com --print~ already prints a password and never reaches ~copy!~. To see the clipboard path from the CLI you need a real terminal and no ~--print~.
 
