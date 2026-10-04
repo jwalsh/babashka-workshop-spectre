@@ -22,8 +22,8 @@ own state, logs, hooks, a language server.
 
 - `main` carries the tooling and is the base. `src/` and `test/` differ from
   upstream's `main` in five files: E1's tests in `core_test.clj`, docstrings
-  and probes in `core.clj`, exploration forms in the `comment` blocks of
-  `clipboard.clj` and `db.clj`, and REPL runners at the end of
+  and probes in `core.clj` and `clipboard.clj`, exploration forms in the
+  `comment` block of `db.clj`, and REPL runners at the end of
   `clipboard_test.clj`. Nothing is pushed to `origin`. It is a public fork,
   where a push publishes at once: decide between the history as it is and a
   scrubbed one before the first push.
@@ -66,10 +66,8 @@ own state, logs, hooks, a language server.
 
 ## Open
 
-- `clipboard.clj` still has the workshop's two-line docstrings. Fuller ones
-  for `tools`, `tool` and `copy!`, and numbered probes, wait on the owner's
-  buffer: it has held an unsaved edit since 2026-10-02, in the body of
-  `tool`.
+- The owner's Emacs has not loaded the wiring again since finding 55's fix,
+  so `C-c C-d d` on an alias there still stops at `stringp, nil`.
 - Two babashka REPLs run in the main checkout, 64536 and 55869, from a
   second jack-in (finding 56). `.nrepl-port` names the newer. In a batch
   Emacs, `cider-quit` left the port file behind; a plain `kill` of the
@@ -120,10 +118,6 @@ own state, logs, hooks, a language server.
 - `.tags`, `TAGS` and `worktrees/` are ignored through `.git/info/exclude`,
   which a fresh clone does not have: there `gmake tags` leaves untracked
   files. `.gitignore` already carries `.env`, `.bin/` and `/resources`.
-- `exercises.org` does not mention the shelf. Its *Documentation for a call*
-  table is where the pointer belongs, and the file was open in Emacs when
-  the shelf was added, so it was left alone. `README.org` has the table of
-  what to read for which exercise meanwhile.
 - The shelf has no paredit entry: the package ships no manual, only the
   commentary in `paredit.el`.
 - `gmake guard-resources` is run by hand. Nothing runs it before a commit or
@@ -133,9 +127,10 @@ own state, logs, hooks, a language server.
 - clj-kondo on PATH is 2024.11.14; current is 2026.08.04. The newer one
   inside clojure-lsp reports a namespace-name mismatch in
   `dev/session-status.bb` that `clj-kondo --lint dev` does not.
-- `clj-kondo --lint src` reports one type mismatch in `core.clj` on purpose:
-  the `comment` block keeps the bare `:login` passed to `derive` as a probe
-  (finding 52).
+- `clj-kondo --lint src` reports two type mismatches on purpose, both
+  probes in a `comment` block: the bare `:login` passed to `derive` in
+  `core.clj` (finding 52), and a command vector passed to `fs/which` in
+  `clipboard.clj`.
 - Java on the shell's PATH is 21; the FFI scrypt path needs 22+.
 - nREPL messages are logged in memory only (`*nrepl-messages ...*`). Nothing
   durable records what was evaluated.

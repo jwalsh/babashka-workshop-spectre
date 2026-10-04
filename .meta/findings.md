@@ -275,6 +275,15 @@ order is not by number. Each was hit, not reasoned to.
     inside the editor. `demo`, `session` and `claude` now start what outlives
     them through `env -u`. An Emacs already running keeps what it was given.
 
+57. **A file that stopped reading took its TODOs' names with it.** With an
+    unfinished `fs/` in `tool`, `gmake todos` headed `clipboard.clj` with an
+    empty `requires:` and listed both of its TODOs as `?` with no lines
+    under them: the whole file was parsed at once, and one bad form made it
+    nothing. Noticed by the owner. It now reads form by form, keeps what came
+    before the failure, the ns form included, says where reading stopped and
+    why, and finds the forms after that in the text. Every file that reads
+    lists exactly as before.
+
 ## The exercises themselves
 
 53. **Ten minutes was for the writing, not for the finding out.** The session
