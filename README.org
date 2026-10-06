@@ -107,6 +107,7 @@ gmake status        # is the REPL live, and is it this checkout's
 | ~gmake e1~              | E1: the ~spectre.core~ tests                                                                    |
 | ~gmake e2~              | E2: the clipboard, with a fake clipboard command only                                           |
 | ~gmake e2-clipboard~    | E2 including the test that writes your real clipboard, and restores it                          |
+| ~gmake copy-commands~   | Whether the clipboard tool found here is a copy command, read back through NSPasteboard         |
 | ~gmake e3~              | E3: ~db.edn~ load, save and merge                                                               |
 | ~gmake e4~              | E4: the ~pw~ CLI                                                                                |
 | ~gmake e5~              | E5: the charm.clj TUI, required TODOs                                                           |

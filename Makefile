@@ -199,6 +199,9 @@ e2: ## E2 clipboard, fake clipboard command only
 e2-clipboard: ## E2 including the test that writes your real clipboard
 	SPECTRE_CLIPBOARD_TEST=1 bb test --nses spectre.clipboard-test
 
+copy-commands: ## Check the clipboard tool against NSPasteboard: what a copy command is (BOARD=general for the clipboard itself)
+	@bb -cp dev:src -m workshop.copy-commands $(if $(BOARD),--board $(BOARD))
+
 e3: ## E3 db.edn load/save/merge
 	bb test --nses spectre.db-test
 
