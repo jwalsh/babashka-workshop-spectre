@@ -304,6 +304,18 @@ order is not by number. Each was hit, not reasoned to.
     the exit code, so `copy!` reports success. Only reading the board says
     whether the text arrived.
 
+61. **The size limits are in the terminal route, not the clipboard.** pbcopy
+    put 1, 16, 64 and 128 MB on the find pasteboard in 15 to 279 ms, and
+    NSPasteboard gave back the exact length with both ends intact; nothing
+    in pbcopy's manual sets a maximum. The caps are on OSC 52, the escape
+    sequence a program writes for the terminal to set the clipboard, which
+    is how a harness reaches the clipboard over SSH: pi refuses past
+    100,000 characters of base64, about 73 KB of text, and says why it
+    prefers a native route on a desktop: "OSC 52 cannot be verified".
+    Claude Code 2.1.290 writes both, a native tool when local and OSC 52
+    always, and no size check was found near that code. Read from the
+    installed binaries; the harnesses' own clipboard commands were not run.
+
 ## The exercises themselves
 
 53. **Ten minutes was for the writing, not for the finding out.** The session
