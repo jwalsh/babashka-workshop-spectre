@@ -18,20 +18,24 @@ fill in stubs. The password tool is the vehicle. The subject is the method,
 and what an agent can read besides files: a shared live REPL, the editor's
 own state, logs, hooks, a language server.
 
-## Where things stand (2026-10-03)
+## Where things stand (2026-10-06)
 
 - `main` carries the tooling and is the base. `src/` and `test/` differ from
-  upstream's `main` in five files: E1's tests in `core_test.clj`, docstrings
-  and probes in `core.clj` and `clipboard.clj`, exploration forms in the
-  `comment` block of `db.clj`, and REPL runners at the end of
-  `clipboard_test.clj`. Nothing is pushed to `origin`. It is a public fork,
-  where a push publishes at once: decide between the history as it is and a
-  scrubbed one before the first push.
-- E1 is done and merged: `gmake e1` runs 3 tests, 13 assertions. E2 is
-  being worked by the owner in the main checkout itself, not in
-  `worktrees/e2`, which was made and stands level with `cc359a0`, unused.
-  E3 to E5 are stubs. Deadlines: `gmake agenda`; E2 and E3 were due Friday
-  2026-10-02, E4 to E6 Saturday.
+  upstream's `main` in five files: E1's tests in `core_test.clj`, E2's
+  `tool` and `copy!` with docstrings and probes in `clipboard.clj`,
+  docstrings and probes in `core.clj`, exploration forms in the `comment`
+  block of `db.clj`, and REPL runners at the end of `clipboard_test.clj`.
+  Nothing is pushed to `origin`. It is a public fork, where a push publishes
+  at once: decide between the history as it is and a scrubbed one before
+  the first push.
+- E1 and E2 are done and merged. `gmake e1` runs 3 tests, 13 assertions;
+  `gmake e2` 2 tests, 3 assertions. E2 was finished for the owner, on
+  request, in `worktrees/e2`; the `tool` they had begun in the main checkout
+  is kept on the branch `e2-attempt`. Its heading in `exercises.org` still
+  says TODO: that buffer held unsaved results of the E2 block when E2 was
+  merged, so the file was left to the owner. E3 to E5 are stubs, and `gmake
+  test` stands at 22 tests, 98 assertions, 25 failing and 2 errors, all of
+  them theirs. Deadlines: `gmake agenda`.
 - clj-kondo now knows E2's signatures and `fs/which`'s, and `C-c C-d d`
   answers an alias or a namespace with a page of its names (finding 55).
   The wiring change reaches a running Emacs only when it loads the file
@@ -40,7 +44,7 @@ own state, logs, hooks, a language server.
   and how to read the docs for the calls it names. E2 and E3 are done in
   detail; E4 to E6 are thinner.
 - Worktrees, under `worktrees/` (ignored through `.git/info/exclude`):
-  `e1`, merged into `main` and level with it; `conj-26`, upstream's
+  `e1` and `e2`, merged into `main` and level with it; `conj-26`, upstream's
   solutions branch, with none of our tooling. Do not read solution bodies
   out of `conj-26` into an exercise branch.
 - Hooks in `.claude/settings.json`: session status on start; delimiter
