@@ -6,7 +6,14 @@
 
 (def ^:private tools
   "Clipboard commands, in the order they are tried. A command is a vector
-   of strings: the program, looked up on PATH, then its arguments."
+   of strings: the program, looked up on PATH, then its arguments.
+
+   Each is a copy command: it reads its standard input to the end, exits 0,
+   prints nothing, and leaves that text as the clipboard's plain text, so
+   that the platform's own interface reads back the same bytes: NSPasteboard
+   on macOS, the CLIPBOARD selection on X11, the Wayland selection, the
+   Windows clipboard. copy! sees only the exit code; gmake copy-commands
+   reads the board."
   [["pbcopy"]
    ["wl-copy"]
    ["xclip" "-selection" "clipboard"]
