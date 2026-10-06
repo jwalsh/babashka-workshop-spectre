@@ -284,6 +284,26 @@ order is not by number. Each was hit, not reasoned to.
     why, and finds the forms after that in the text. Every file that reads
     lists exactly as before.
 
+58. **pbcopy succeeds at the wrong text when there is no locale.** With no
+    `LANG` or `LC_*`, pbcopy takes its input in "the standard C encoding",
+    as its manual says: `"é ü 🔑"` read back through NSPasteboard as
+    `"√© √º üîë"`, and the board's `changeCount` went up as for any good
+    write. Exit 0 and a changed board say a copy happened, not that it was
+    the text. The owner's REPL runs with `LANG=en_US.UTF-8`, and every
+    Spectre password is ASCII. `gmake copy-commands` keeps the no-locale
+    case as a check that fails.
+59. **A check that puts a board back has to save it before its first
+    write.** A first pbcopy test wrote "SECRET" to the find pasteboard, and
+    only a later section of the same script saved that board and put it
+    back, so what put back was "SECRET". What the find pasteboard held
+    before is lost. `workshop.copy-commands` saves every item and type before
+    it writes anything, and restores them in a `finally`.
+60. **Exit 0 does not mean the input was read.** `true` given 200 KB on
+    stdin exits 0 without reading it; babashka.process reports "ERROR while
+    copying :in option: Broken pipe" on stderr and the call still returns
+    the exit code, so `copy!` reports success. Only reading the board says
+    whether the text arrived.
+
 ## The exercises themselves
 
 53. **Ten minutes was for the writing, not for the finding out.** The session

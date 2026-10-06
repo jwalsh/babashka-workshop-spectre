@@ -36,6 +36,12 @@ own state, logs, hooks, a language server.
   merged, so the file was left to the owner. E3 to E5 are stubs, and `gmake
   test` stands at 22 tests, 98 assertions, 25 failing and 2 errors, all of
   them theirs. Deadlines: `gmake agenda`.
+- What a copy command is, for E2's `tools`: it reads stdin to the end,
+  exits 0, prints nothing, and the platform's own clipboard interface reads
+  back the same bytes. `gmake copy-commands` checks the tool found here
+  against NSPasteboard through JXA, on the find pasteboard unless
+  `BOARD=general`, and puts the board back. pbcopy passes in a UTF-8 locale
+  and fails without one (finding 58); `cat` and `true` fail.
 - clj-kondo now knows E2's signatures and `fs/which`'s, and `C-c C-d d`
   answers an alias or a namespace with a page of its names (finding 55).
   The wiring change reaches a running Emacs only when it loads the file
@@ -140,6 +146,12 @@ own state, logs, hooks, a language server.
   durable records what was evaluated.
 
 ## Never verified
+
+- `gmake copy-commands BOARD=general`, which writes the clipboard itself.
+  The same code was run on the find pasteboard, the saving and putting back
+  of every item and type included. The X11, Wayland and Windows baselines
+  are written down in `workshop.copy-commands` and checked nowhere: there
+  is no X server here, and Docker was not running.
 
 - Keys in the user's Emacs. `C-c C-d d`, `C-c C-t n` and `M-.` were checked
   by calling the functions under them through `emacsclient`, and the nREPL
